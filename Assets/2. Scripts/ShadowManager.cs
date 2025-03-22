@@ -1,108 +1,94 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-public class ShadowManager: MonoBehaviour
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+public class VertexShadowCasting2D : MonoBehaviour
 {
+    public Transform lightSource; // 광원의 Transform
+    public LayerMask obstacleMask; // 장애물 레이어
+    public float shadowDistance = 10f; // 그림자 최대 거리
 
-    [SerializeField]
-    private Material glDraw;
-    private LightObject[] lights;
-    private float camHeight, camWidth;
+    private Mesh mesh;
 
     void Start()
     {
-        lights = FindObjectsByType<LightObject>(FindObjectsSortMode.InstanceID);
-        camHeight = Camera.main.orthographicSize * 2;
-        camWidth = camHeight * Camera.main.aspect;
-
-        RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
+        mesh = new Mesh();
+        GetComponent<MeshFilter>().mesh = mesh;
     }
 
-    private void OnEndCameraRendering(ScriptableRenderContext context, Camera camera)
+    void Update()
     {
-        OnPostRender();
+        GenerateShadowMesh();
     }
 
-    private void OnPostRender()
+    void GenerateShadowMesh()
     {
-        float camLeft = transform.position.x - camWidth / 2;
-        float camBottom = transform.position.y - camHeight / 2;
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
 
-        GL.PushMatrix();
-        glDraw.SetPass(0);
-        GL.LoadOrtho();
+        Vector3 lightPos = lightSource.position;
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(lightPos, shadowDistance, obstacleMask);
 
-        Collider2D[] col = Physics2D.OverlapBoxAll(transform.position, new Vector2(camWidth, camHeight), 0, LayerMask.GetMask("Tile"));
-        foreach (var collision in col)
+        foreach (Collider2D obstacle in obstacles)
         {
-            Tile tile = collision.GetComponent<Tile>();
-            float left = (tile.left - camLeft) / camWidth;
-            float top = (tile.top - camBottom) / camHeight;
-            float right = (tile.right - camLeft) / camWidth;
-            float bottom = (tile.bottom - camBottom) / camHeight;
+            List<Vector3> objectVertices = GetColliderVertices(obstacle);
 
-            foreach (var light in lights)
+            foreach (Vector3 vertex in objectVertices)
             {
-                if (light.transform.position.x <= tile.centerX && light.transform.position.y <= tile.centerY)
-                    DrawShadow(left, bottom, right, top);
+                Vector3 direction = (vertex - lightPos).normalized;
+                Vector3 shadowPoint = vertex + direction * shadowDistance;
 
-                if (light.transform.position.x <= tile.centerX && light.transform.position.y >= tile.centerY)
-                    DrawShadow(left, top, right, bottom);
+                int vertexIndex = vertices.Count;
+                vertices.Add(transform.InverseTransformPoint(vertex)); // 장애물 꼭짓점
+                vertices.Add(transform.InverseTransformPoint(shadowPoint)); // 그림자 끝점
 
-                if (light.transform.position.x >= tile.centerX && light.transform.position.y <= tile.centerY)
-                    DrawShadow(right, bottom, left, top);
+                if (vertexIndex >= 2)
+                {
+                    triangles.Add(vertexIndex - 2);
+                    triangles.Add(vertexIndex - 1);
+                    triangles.Add(vertexIndex);
 
-                if (light.transform.position.x >= tile.centerX && light.transform.position.y >= tile.centerY)
-                    DrawShadow(right, top, left, bottom);
+                    triangles.Add(vertexIndex - 1);
+                    triangles.Add(vertexIndex + 1);
+                    triangles.Add(vertexIndex);
+                }
             }
-
         }
-        GL.PopMatrix();
+
+        mesh.Clear();
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.RecalculateNormals();
     }
 
-    void DrawShadow(float x1, float y1, float x2, float y2)
+    List<Vector3> GetColliderVertices(Collider2D collider)
     {
-        float x = 0.5f, y = 0.5f;
-        int len = 100;
-        float projx1 = x2 + (x2 - x) * len;
-        float projy1 = y1 + (y1 - y) * len;
-        float projx2 = x1 + (x1 - x) * len;
-        float projy2 = y2 + (y2 - y) * len;
+        List<Vector3> vertices = new List<Vector3>();
 
-        GL.Begin(GL.TRIANGLES);
-        GL.Color(Color.white);
+        if (collider is PolygonCollider2D polyCollider)
+        {
+            foreach (Vector2 localPoint in polyCollider.points)
+            {
+                vertices.Add(collider.transform.TransformPoint(localPoint));
+            }
+        }
+        else if (collider is BoxCollider2D boxCollider)
+        {
+            Vector2 size = boxCollider.size * 0.5f;
+            Vector2[] localPoints = new Vector2[]
+            {
+                new Vector2(-size.x, -size.y),
+                new Vector2(-size.x, size.y),
+                new Vector2(size.x, size.y),
+                new Vector2(size.x, -size.y)
+            };
 
-        GL.Vertex(new Vector3(x1, y1, 0));
-        GL.Vertex(new Vector3(x2, y1, 0));
-        GL.Vertex(new Vector3(projx1, projy1, 0));
+            foreach (Vector2 localPoint in localPoints)
+            {
+                vertices.Add(boxCollider.transform.TransformPoint(localPoint));
+            }
+        }
 
-
-
-        GL.Vertex(new Vector3(x1, y1, 0));
-        GL.Vertex(new Vector3(projx2, projy1, 0));
-        GL.Vertex(new Vector3(projx1, projy1, 0));
-
-        GL.Vertex(new Vector3(x1, y1, 0));
-        GL.Vertex(new Vector3(x1, y2, 0));
-        GL.Vertex(new Vector3(projx2, projy2, 0));
-
-        GL.Vertex(new Vector3(x1, y1, 0));
-        GL.Vertex(new Vector3(projx2, projy1, 0));
-        GL.Vertex(new Vector3(projx2, projy2, 0));
-
-        Debug.DrawLine(new Vector3(x1, y1, 0), new Vector3(x2, y1, 0), Color.white);
-        Debug.DrawLine(new Vector3(projx1, projy1, 0), new Vector3(x2, y1, 0), Color.white);
-        Debug.DrawLine(new Vector3(x1, y1, 0), new Vector3(projx1, projy1, 0), Color.white);
-
-        GL.Vertex(new Vector3(1, 0, 0));
-        GL.Vertex(new Vector3(1, 1, 0));
-        GL.Vertex(new Vector3(0, 1, 0));
-
-        GL.End();
-    }
-
-    private void OnDestroy()
-    {
-        RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+        return vertices;
     }
 }
