@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class ShadowCaster : MonoBehaviour
 {
-    public List<Transform> lightSources = new List<Transform>(); // 여러 광원
-    public float shadowDistance = 10f; // 그림자 최대 거리
-    public Material shadowMaterial; // 그림자 머티리얼
+    public float shadowDistance = 10f;      // maximum shadow length
+    public Material shadowMaterial;         // shadow material
 
     private float camWidth;
     private Mesh mesh;
@@ -14,52 +14,43 @@ public class ShadowCaster : MonoBehaviour
     {
         mesh = new Mesh();
         camWidth = Camera.main.orthographicSize * Camera.main.aspect * 2;
-        var render = new GameObject();
-        render.transform.SetParent(transform);
-        render.transform.localScale = Vector3.one;
-        render.transform.localPosition = Vector3.zero;
-        render.AddComponent<MeshFilter>().mesh = mesh;
-        render.AddComponent<MeshRenderer>().material = shadowMaterial;
     }
 
     void Update()
     {
-        GenerateShadowMesh();
+        GenerateShadow(shadowDistance);
     }
 
-    void GenerateShadowMesh()
+    private void GenerateShadowMesh()
     {
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
 
-        foreach (Transform lightSource in lightSources)
+        Vector3 lightPos = transform.position;
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(lightPos, camWidth, 1 << LayerMask.NameToLayer("Tile"));
+
+        foreach (Collider2D obstacle in obstacles)
         {
-            Vector3 lightPos = lightSource.position;
-            Collider2D[] obstacles = Physics2D.OverlapCircleAll(lightPos, camWidth, 1 << LayerMask.NameToLayer("Tile"));
+            List<Vector3> objectVertices = GetColliderVertices(obstacle);
 
-            foreach (Collider2D obstacle in obstacles)
+            foreach (Vector3 vertex in objectVertices)
             {
-                List<Vector3> objectVertices = GetColliderVertices(obstacle);
+                Vector3 direction = (vertex - lightPos).normalized;
+                Vector3 shadowPoint = vertex + direction * shadowDistance;
 
-                foreach (Vector3 vertex in objectVertices)
+                int vertexIndex = vertices.Count;
+                vertices.Add(transform.InverseTransformPoint(vertex));          // obstacle edges
+                vertices.Add(transform.InverseTransformPoint(shadowPoint));     // shadow end point
+
+                if (vertexIndex >= 2)
                 {
-                    Vector3 direction = (vertex - lightPos).normalized;
-                    Vector3 shadowPoint = vertex + direction * shadowDistance;
+                    triangles.Add(vertexIndex - 2);
+                    triangles.Add(vertexIndex - 1);
+                    triangles.Add(vertexIndex);
 
-                    int vertexIndex = vertices.Count;
-                    vertices.Add(transform.InverseTransformPoint(vertex)); // 장애물 꼭짓점
-                    vertices.Add(transform.InverseTransformPoint(shadowPoint)); // 그림자 끝점
-
-                    if (vertexIndex >= 2)
-                    {
-                        triangles.Add(vertexIndex - 2);
-                        triangles.Add(vertexIndex - 1);
-                        triangles.Add(vertexIndex);
-
-                        triangles.Add(vertexIndex - 1);
-                        triangles.Add(vertexIndex + 1);
-                        triangles.Add(vertexIndex);
-                    }
+                    triangles.Add(vertexIndex - 1);
+                    triangles.Add(vertexIndex + 1);
+                    triangles.Add(vertexIndex);
                 }
             }
         }
@@ -70,7 +61,63 @@ public class ShadowCaster : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    List<Vector3> GetColliderVertices(Collider2D collider)
+    private void GenerateShadow(float shadowLen)
+    {
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, camWidth, 1 << LayerMask.NameToLayer("Tile"));
+
+        foreach (var obs in obstacles)
+        {
+            var shadow = ShadowPool.Instance.InstantiateShadow(this);
+
+            //foreach (var s in shadowList)
+            //{
+            //    if (ShadowPool.Instance.IsShadowExisting(s))
+            //    {
+            //        shadow = s;
+            //    }
+            //}
+            //if (!ShadowPool.Instance.GetChildShadowList(true).SequenceEqual(shadowList))      // Not that shadow is already existing
+            //{
+            //    shadow = ShadowPool.Instance.InstantiateShadow(this);
+            //}
+            //else    
+            //{
+            //    shadow = obs.GetComponent<Shadow>();
+            //}
+
+
+
+            List<Vector3> objectVertices = GetColliderVertices(obs);
+            List<Vector3> points = new List<Vector3>();
+            foreach (var vertex in objectVertices)
+            {
+                Vector3 direction = (vertex - transform.position).normalized;
+                Vector3 shadowPoint = vertex + direction * shadowDistance;
+                points.Add(transform.InverseTransformPoint(vertex));            // obstacle edges
+                points.Add(transform.InverseTransformPoint(shadowPoint));       // shadow end point
+            }
+            Debug.Log(points.Count);
+            shadow.SetCollision(points);
+        }
+
+        foreach (var shadow in ShadowPool.Instance.GetChildShadowList(false))
+        {
+            for (int i = 0; i < obstacles.Length; i++)
+            {
+                if (shadow != obstacles[i].GetComponent<Shadow>())
+                {
+                    shadow.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        //for (int i = 0; i < ShadowPool.Instance.GetChildShadowList().Count; i++)
+        //{
+        //    ShadowPool.Instance.GetChildShadowList().Find((n) => n != obstacles.).gameObject.SetActive(false);
+        //}
+    }
+
+    private List<Vector3> GetColliderVertices(Collider2D collider)
     {
         List<Vector3> vertices = new List<Vector3>();
 
