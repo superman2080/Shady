@@ -5,9 +5,9 @@ using System.Linq;
 [RequireComponent(typeof(PolygonCollider2D))]
 public class Shadow : MonoBehaviour
 {
-    public ShadowCaster lightSource;
+    [HideInInspector] public ShadowCaster lightSource;
     public PolygonCollider2D col { get; private set; }
-
+    public Texture texture;
     private void Awake()
     {
         col = gameObject.GetComponent<PolygonCollider2D>();
