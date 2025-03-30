@@ -17,7 +17,7 @@ public class ShadowPool : Singleton<ShadowPool>
 
     public bool IsShadowExisting(Shadow comp)
     {
-        return GetChildShadowList(true).Exists((s) => s == comp);
+        return GetChildShadowList(true).Exists((s) => s == comp && s.lightSource != null);
     }
 
     //public bool IsExistingUsableShadow()
@@ -33,7 +33,7 @@ public class ShadowPool : Singleton<ShadowPool>
     */
 
 
-    public List<Shadow> GetChildShadowList(bool includeInactive)
+    public List<Shadow> GetChildShadowList(bool includeInactive = true)
     {
         return transform.GetComponentsInChildren<Shadow>(includeInactive).ToList();
     }
@@ -45,9 +45,12 @@ public class ShadowPool : Singleton<ShadowPool>
             if(shadow.gameObject.activeSelf == false)
             {
                 shadow.gameObject.SetActive(true);
+                shadow.lightSource = lightSource;
                 return shadow;
             }
         }
-        return Instantiate(shadowPrefab, Vector3.zero, Quaternion.identity, Pool).GetComponent<Shadow>();
+        var result = Instantiate(shadowPrefab, Vector3.zero, Quaternion.identity, Pool).GetComponent<Shadow>();
+        result.lightSource = lightSource;
+        return result;
     }
 }

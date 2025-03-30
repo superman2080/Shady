@@ -8,14 +8,11 @@ public class Shadow : MonoBehaviour
     public ShadowCaster lightSource;
     public PolygonCollider2D col { get; private set; }
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Awake()
     {
         col = gameObject.GetComponent<PolygonCollider2D>();
-        col.pathCount = 1;
-        Debug.Log(col.name);
     }
+
 
     private void OnEnable()
     {
