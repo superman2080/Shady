@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -45,7 +46,7 @@ public class ShadowCaster : MonoBehaviour
                 points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
                 points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
             }
-            shadow.SetCollision(points);
+            shadow.GenerateShadow(points, Color.black);
         }
 
         if (shadowList.Count > obstacles.Length)
