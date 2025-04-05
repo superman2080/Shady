@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -5,66 +6,23 @@ using System.Linq;
 public class ShadowCaster : MonoBehaviour
 {
     public float shadowDistance = 10f;      // maximum shadow length
-    public Material shadowMaterial;         // shadow material
 
-    [SerializeField] private List<Shadow> shadowList = new List<Shadow>();
+    private List<Shadow> shadowList = new List<Shadow>();
     private float camWidth;
-    private Mesh mesh;
 
     void Start()
     {
-        mesh = new Mesh();
         camWidth = Camera.main.orthographicSize * Camera.main.aspect * 2;
     }
 
     void Update()
     {
-        GenerateShadow(shadowDistance);
+        GenerateShadow(shadowDistance, 1 << LayerMask.NameToLayer("Tile"));
     }
 
-    //private void GenerateShadowMesh()
-    //{
-    //    List<Vector3> vertices = new List<Vector3>();
-    //    List<int> triangles = new List<int>();
-
-    //    Vector3 lightPos = transform.position;
-    //    Collider2D[] obstacles = Physics2D.OverlapCircleAll(lightPos, camWidth, 1 << LayerMask.NameToLayer("Tile"));
-
-    //    foreach (Collider2D obstacle in obstacles)
-    //    {
-    //        List<Vector3> objectVertices = GetColliderVertices(obstacle);
-
-    //        foreach (Vector3 vertex in objectVertices)
-    //        {
-    //            Vector3 direction = (vertex - lightPos).normalized;
-    //            Vector3 shadowPoint = vertex + direction * shadowDistance;
-
-    //            int vertexIndex = vertices.Count;
-    //            vertices.Add(transform.InverseTransformPoint(vertex));          // obstacle edges
-    //            vertices.Add(transform.InverseTransformPoint(shadowPoint));     // shadow end point
-
-    //            if (vertexIndex >= 2)
-    //            {
-    //                triangles.Add(vertexIndex - 2);
-    //                triangles.Add(vertexIndex - 1);
-    //                triangles.Add(vertexIndex);
-
-    //                triangles.Add(vertexIndex - 1);
-    //                triangles.Add(vertexIndex + 1);
-    //                triangles.Add(vertexIndex);
-    //            }
-    //        }
-    //    }
-
-    //    mesh.Clear();
-    //    mesh.vertices = vertices.ToArray();
-    //    mesh.triangles = triangles.ToArray();
-    //    mesh.RecalculateNormals();
-    //}
-
-    private void GenerateShadow(float shadowLen)
+    private void GenerateShadow(float shadowLen, int layer)
     {
-        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, camWidth, 1 << LayerMask.NameToLayer("Tile"));
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, camWidth, layer);
 
         for (int i = 0; i < obstacles.Length; i++)
         {
@@ -85,10 +43,10 @@ public class ShadowCaster : MonoBehaviour
             {
                 Vector3 direction = (vertex - transform.position).normalized;
                 Vector3 shadowPoint = vertex + direction * shadowLen;
-                points.Add(transform.InverseTransformPoint(vertex));            // obstacle edges
-                points.Add(transform.InverseTransformPoint(shadowPoint));       // shadow end point
+                points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
+                points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
             }
-            shadow.SetCollision(points);
+            shadow.GenerateShadow(points, Color.black);
         }
 
         if (shadowList.Count > obstacles.Length)
