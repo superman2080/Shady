@@ -46,7 +46,7 @@ public class ShadowCaster : MonoBehaviour
                 points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
                 points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
             }
-            shadow.GenerateShadow(points, Color.black);
+            shadow.GenerateShadow(points);
         }
 
         if (shadowList.Count > obstacles.Length)
@@ -92,4 +92,6 @@ public class ShadowCaster : MonoBehaviour
 
         return vertices;
     }
+
+
 }

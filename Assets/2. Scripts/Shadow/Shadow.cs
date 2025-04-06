@@ -37,7 +37,7 @@ public class Shadow : MonoBehaviour
     //    col.SetPath(0, sorted);
     //}
 
-    public void GenerateShadow(List<Vector3> points, Color color)
+    public void GenerateShadow(List<Vector3> points)
     {
         if (points.Count < 3) return; // 삼각형 이상만 그리기
 
@@ -76,6 +76,27 @@ public class Shadow : MonoBehaviour
 
         // 콜라이더도 맞게 설정
         col.SetPath(0, sorted.Select(p => new Vector2(p.x, p.y)).ToArray());
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (mesh == null) return;
+
+        Gizmos.color = Color.red;
+
+        foreach (var v in mesh.vertices)
+        {
+            Vector3 worldPos = transform.TransformPoint(v);
+            Gizmos.DrawSphere(worldPos, 0.05f);
+        }
+
+        // 선으로 연결 (옵션)
+        Gizmos.color = Color.yellow;
+        var verts = mesh.vertices.Select(v => transform.TransformPoint(v)).ToList();
+        for (int i = 0; i < verts.Count; i++)
+        {
+            Gizmos.DrawLine(verts[i], verts[(i + 1) % verts.Count]);
+        }
     }
 
     private void OnDisable()

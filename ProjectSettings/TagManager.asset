@@ -44,5 +44,11 @@ TagManager:
   - name: Tile
     uniqueID: 2878607505
     locked: 0
+  - name: Shadow
+    uniqueID: 3240034377
+    locked: 0
+  - name: Light
+    uniqueID: 3403702675
+    locked: 0
   m_RenderingLayers:
   - Default
