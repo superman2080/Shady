@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -20,7 +20,7 @@ public class ShadowCaster : MonoBehaviour
         GenerateShadow(shadowDistance, 1 << LayerMask.NameToLayer("Tile"));
     }
 
-    private void GenerateShadow(float shadowLen, int layer)
+    private void GenerateShadow(float shadowDist, int layer)
     {
         Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, camWidth, layer);
 
@@ -37,21 +37,22 @@ public class ShadowCaster : MonoBehaviour
                 shadow = shadowList[i];
             }
 
-            List<Vector3> objectVertices = GetColliderVertices(obstacles[i]);
-            List<Vector3> points = new List<Vector3>();
-            foreach (var vertex in objectVertices)
-            {
-                Vector3 direction = (vertex - transform.position).normalized;
-                Vector3 shadowPoint = vertex + direction * shadowLen;
-                points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
-                points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
-            }
-            shadow.GenerateShadow(points);
+            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], shadowDist);
+            //List<Vector3> points = new List<Vector3>();
+            //foreach (var vertex in objectVertices)
+            //{
+            //    Vector3 direction = (vertex - transform.position).normalized;
+            //    Vector3 shadowPoint = vertex + direction * shadowDist;
+            //    points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
+            //    points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
+            //}
+            //shadow.GenerateShadow(points);
+            shadow.GenerateShadow(objectVertices);
         }
 
         if (shadowList.Count > obstacles.Length)
         {
-            int removeCount = shadowList.Count - obstacles.Length; // ������ ���� ����
+            int removeCount = shadowList.Count - obstacles.Length; // 삭제할 개수 저장
 
             for (int i = shadowList.Count - 1; i >= Mathf.Max(0, shadowList.Count - removeCount); i--)
             {
@@ -62,7 +63,7 @@ public class ShadowCaster : MonoBehaviour
         shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
     }
 
-    private List<Vector3> GetColliderVertices(Collider2D collider)
+    private List<Vector3> GetColliderVertices(Collider2D collider, float shadowDist)
     {
         List<Vector3> vertices = new List<Vector3>();
 
@@ -78,10 +79,10 @@ public class ShadowCaster : MonoBehaviour
             Vector2 size = boxCollider.size * 0.5f;
             Vector2[] localPoints = new Vector2[]
             {
-                new Vector2(-size.x, -size.y),
-                new Vector2(-size.x, size.y),
-                new Vector2(size.x, size.y),
-                new Vector2(size.x, -size.y)
+            new Vector2(-size.x, -size.y),
+            new Vector2(-size.x, size.y),
+            new Vector2(size.x, size.y),
+            new Vector2(size.x, -size.y)
             };
 
             foreach (Vector2 localPoint in localPoints)
@@ -90,8 +91,52 @@ public class ShadowCaster : MonoBehaviour
             }
         }
 
-        return vertices;
-    }
+        // 1. 각도 및 점 저장
+        List<(float angle, Vector3 point)> anglePoints = new ();
 
+        foreach (var point in vertices)
+        {
+            Vector2 dir = (point - transform.position).normalized;
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            if (angle < 0) angle += 360f;
+
+            anglePoints.Add((angle, point));
+        }
+
+        // 2. 각도로 정렬
+        anglePoints.Sort((a, b) => a.angle.CompareTo(b.angle));
+
+        // 3. 가장 큰 각도 차이가 나는 두 점 찾기
+        float maxGap = 0;
+        int maxIndex = 0;
+
+        for (int i = 0; i < anglePoints.Count; i++)
+        {
+            int nextIndex = (i + 1) % anglePoints.Count;
+
+            float currentAngle = anglePoints[i].angle;
+            float nextAngle = anglePoints[nextIndex].angle;
+
+            float gap = (nextAngle - currentAngle + 360f) % 360f;
+
+            if (gap > maxGap)
+            {
+                maxGap = gap;
+                maxIndex = nextIndex;
+            }
+        }
+
+        // 4. 그림자 정점 만들기
+        Vector3 pointA = anglePoints[maxIndex % anglePoints.Count].point;
+        Vector3 pointB = anglePoints[(maxIndex - 1 + anglePoints.Count) % anglePoints.Count].point;
+
+        List<Vector3> result = new List<Vector3>();
+        result.Add(pointA);
+        result.Add(pointA + (pointA - transform.position).normalized * shadowDist);
+        result.Add(pointB + (pointB - transform.position).normalized * shadowDist);
+        result.Add(pointB);
+
+        return result;
+    }
 
 }
