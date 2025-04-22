@@ -17,25 +17,10 @@ public class Shadow : MonoBehaviour
         meshFilter.mesh = mesh;
     }
 
-
     private void OnEnable()
     {
         transform.position = Vector3.zero;
     }
-
-    //public void GenerateShadow(List<Vector3> points, Color color)
-    //{
-    //    Vector3 center = new Vector3(points.Average(p => p.x), points.Average(p => p.y));
-
-    //    var sorted = points.OrderBy(p => Mathf.Atan2(p.y - center.y, p.x - center.x)).Select(v => new Vector2(v.x, v.y)).ToList();
-
-    //    int[] triangles = Enumerable.Range(0, sorted.Count + 1).ToArray();
-    //    triangles[triangles.Length - 1] = 0;
-    //    mesh.vertices = points.ToArray();
-    //    mesh.triangles = triangles;
-    //    mesh.RecalculateNormals();
-    //    col.SetPath(0, sorted);
-    //}
 
     public void GenerateShadow(List<Vector3> points)
     {
@@ -76,27 +61,6 @@ public class Shadow : MonoBehaviour
 
         // 콜라이더도 맞게 설정
         col.SetPath(0, sorted.Select(p => new Vector2(p.x, p.y)).ToArray());
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (mesh == null) return;
-
-        Gizmos.color = Color.red;
-
-        foreach (var v in mesh.vertices)
-        {
-            Vector3 worldPos = transform.TransformPoint(v);
-            Gizmos.DrawSphere(worldPos, 0.05f);
-        }
-
-        // 선으로 연결 (옵션)
-        Gizmos.color = Color.yellow;
-        var verts = mesh.vertices.Select(v => transform.TransformPoint(v)).ToList();
-        for (int i = 0; i < verts.Count; i++)
-        {
-            Gizmos.DrawLine(verts[i], verts[(i + 1) % verts.Count]);
-        }
     }
 
     private void OnDisable()

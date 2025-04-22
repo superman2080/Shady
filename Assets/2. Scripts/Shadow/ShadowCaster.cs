@@ -2,27 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System;
 
 public class ShadowCaster : MonoBehaviour
 {
-    public float shadowDistance = 10f;      // maximum shadow length
+    public float lightScale = 15f;
+    public float minShadowScale = 5f;
 
     private List<Shadow> shadowList = new List<Shadow>();
-    private float camWidth;
-
-    void Start()
-    {
-        camWidth = Camera.main.orthographicSize * Camera.main.aspect * 2;
-    }
 
     void Update()
     {
-        GenerateShadow(shadowDistance, 1 << LayerMask.NameToLayer("Tile"));
+        GenerateShadow(lightScale, 1 << LayerMask.NameToLayer("Tile"));
     }
 
-    private void GenerateShadow(float shadowDist, int layer)
+    private void GenerateShadow(float lS, int layer)
     {
-        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, camWidth, layer);
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, lS, layer);
 
         for (int i = 0; i < obstacles.Length; i++)
         {
@@ -36,18 +32,9 @@ public class ShadowCaster : MonoBehaviour
             {
                 shadow = shadowList[i];
             }
-
-            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], shadowDist);
-            //List<Vector3> points = new List<Vector3>();
-            //foreach (var vertex in objectVertices)
-            //{
-            //    Vector3 direction = (vertex - transform.position).normalized;
-            //    Vector3 shadowPoint = vertex + direction * shadowDist;
-            //    points.Add(transform.InverseTransformPoint(vertex + transform.position));            // obstacle edges
-            //    points.Add(transform.InverseTransformPoint(shadowPoint + transform.position));       // shadow end point
-            //}
-            //shadow.GenerateShadow(points);
-            shadow.GenerateShadow(objectVertices);
+            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], lS, minShadowScale);
+            List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, minShadowScale);
+            shadow.GenerateShadow(shadowVertices);
         }
 
         if (shadowList.Count > obstacles.Length)
@@ -63,7 +50,7 @@ public class ShadowCaster : MonoBehaviour
         shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
     }
 
-    private List<Vector3> GetColliderVertices(Collider2D collider, float shadowDist)
+    private List<Vector3> GetColliderVertices(Collider2D collider, float shadowDist, float minShadowDist)
     {
         List<Vector3> vertices = new List<Vector3>();
 
@@ -79,10 +66,10 @@ public class ShadowCaster : MonoBehaviour
             Vector2 size = boxCollider.size * 0.5f;
             Vector2[] localPoints = new Vector2[]
             {
-            new Vector2(-size.x, -size.y),
-            new Vector2(-size.x, size.y),
-            new Vector2(size.x, size.y),
-            new Vector2(size.x, -size.y)
+                new Vector2(-size.x, -size.y),
+                new Vector2(-size.x, size.y),
+                new Vector2(size.x, size.y),
+                new Vector2(size.x, -size.y)
             };
 
             foreach (Vector2 localPoint in localPoints)
@@ -90,53 +77,54 @@ public class ShadowCaster : MonoBehaviour
                 vertices.Add(boxCollider.transform.TransformPoint(localPoint));
             }
         }
+        return vertices;
 
-        // 1. 각도 및 점 저장
-        List<(float angle, Vector3 point)> anglePoints = new ();
+    }
 
-        foreach (var point in vertices)
+    private List<Vector3> GetShadowVertices(GameObject obs, List<Vector3> points, float lS, float mD)
+    {
+        obs.layer = LayerMask.NameToLayer("ScanTile");
+        List<Vector3> result = new ();
+
+        Vector3 origin = transform.position;
+        foreach (var point in points)
         {
-            Vector2 dir = (point - transform.position).normalized;
-            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            if (angle < 0) angle += 360f;
 
-            anglePoints.Add((angle, point));
-        }
+            Vector3 dir = (point - origin).normalized;
+            
 
-        // 2. 각도로 정렬
-        anglePoints.Sort((a, b) => a.angle.CompareTo(b.angle));
 
-        // 3. 가장 큰 각도 차이가 나는 두 점 찾기
-        float maxGap = 0;
-        int maxIndex = 0;
+            float offset = 0.03f;
+            Debug.DrawRay(origin, dir * lS, Color.blue);
 
-        for (int i = 0; i < anglePoints.Count; i++)
-        {
-            int nextIndex = (i + 1) % anglePoints.Count;
-
-            float currentAngle = anglePoints[i].angle;
-            float nextAngle = anglePoints[nextIndex].angle;
-
-            float gap = (nextAngle - currentAngle + 360f) % 360f;
-
-            if (gap > maxGap)
+            RaycastHit2D hit = Physics2D.CircleCast(origin, 0.01f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
+            if (hit && Vector3.Distance(point, hit.point) <= offset)
             {
-                maxGap = gap;
-                maxIndex = nextIndex;
+                result.Add(hit.point);
+                result.Add((Vector3)hit.point + dir * mD);
+                Debug.DrawLine(origin, hit.point, Color.red);
             }
         }
 
-        // 4. 그림자 정점 만들기
-        Vector3 pointA = anglePoints[maxIndex % anglePoints.Count].point;
-        Vector3 pointB = anglePoints[(maxIndex - 1 + anglePoints.Count) % anglePoints.Count].point;
+        obs.layer = LayerMask.NameToLayer("Tile");
 
-        List<Vector3> result = new List<Vector3>();
-        result.Add(pointA);
-        result.Add(pointA + (pointA - transform.position).normalized * shadowDist);
-        result.Add(pointB + (pointB - transform.position).normalized * shadowDist);
-        result.Add(pointB);
 
+
+        var closePoints = result.OrderByDescending(p => Vector3.Distance(p, origin)).Take(result.Count / 2);
+        Vector3 center = new Vector3(closePoints.Average(p => p.x), closePoints.Average(p => p.y));
+        //Vector3 center = new Vector3(
+        //    (result.Min(p => p.x) + result.Max(p => p.x)) / 2f,
+        //    (result.Min(p => p.y) + result.Max(p => p.y)) / 2f
+        //    );
+        Debug.DrawLine(center + Vector3.left * 0.03f, center + Vector3.right * 0.03f, Color.blue, 0.1f);
+        result = result.OrderByDescending(p => Mathf.Atan2(p.y - center.y, p.x - center.x)).ToList();
+        if (result.Count > 0)
+            result.Sort((a, b) =>
+            {
+                float angleA = Mathf.Atan2(a.y - origin.y, a.x - origin.x);
+                float angleB = Mathf.Atan2(b.y - origin.y, b.x - origin.x);
+                return angleA.CompareTo(angleB);
+            });
         return result;
     }
-
 }
