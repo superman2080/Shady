@@ -26,17 +26,14 @@ public class Shadow : MonoBehaviour
     {
         if (points.Count < 3) return; // 삼각형 이상만 그리기
 
-        // 중심점 계산
-        Vector3 center = new Vector3(points.Average(p => p.x), points.Average(p => p.y));
+        col.SetPath(0, points.Select(p => new Vector2(p.x, p.y)).ToArray());
 
-        // 시계 방향 정렬
-        var sorted = points
-            .OrderBy(p => Mathf.Atan2(p.y - center.y, p.x - center.x))
-            .ToList();
+        //중심점 계산
+        Vector3 center = new Vector3(points.Average(p => p.x), points.Average(p => p.y));
 
         // 정점 목록 (중심점 + 꼭짓점)
         List<Vector3> vertices = new List<Vector3> { center };
-        vertices.AddRange(sorted);
+        vertices.AddRange(points);
 
         // 삼각형 인덱스 생성 (팬 방식)
         List<int> triangles = new List<int>();
@@ -58,9 +55,6 @@ public class Shadow : MonoBehaviour
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-
-        // 콜라이더도 맞게 설정
-        col.SetPath(0, sorted.Select(p => new Vector2(p.x, p.y)).ToArray());
     }
 
     private void OnDisable()
