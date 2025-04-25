@@ -59,6 +59,7 @@ public class ShadowCaster : MonoBehaviour
             foreach (Vector2 localPoint in polyCollider.points)
             {
                 vertices.Add(collider.transform.TransformPoint(localPoint));
+                Debug.Log($"{polyCollider.shapeCount}: {localPoint}");
             }
         }
         else if (collider is BoxCollider2D boxCollider)
@@ -77,6 +78,14 @@ public class ShadowCaster : MonoBehaviour
                 vertices.Add(boxCollider.transform.TransformPoint(localPoint));
             }
         }
+
+        Vector3 origin = transform.position; // 빛 위치
+        vertices = vertices.OrderBy(p =>
+        {
+            float angle = Mathf.Atan2(p.y - origin.y, p.x - origin.x) * Mathf.Rad2Deg;
+            if (angle < 0) angle += 360f;
+            return angle;
+        }).ToList();
         return vertices;
 
     }
@@ -84,9 +93,12 @@ public class ShadowCaster : MonoBehaviour
     private List<Vector3> GetShadowVertices(GameObject obs, List<Vector3> points, float lS, float mD)
     {
         obs.layer = LayerMask.NameToLayer("ScanTile");
-        List<Vector3> result = new ();
+
+        List<Vector3> firstPoint = new ();
+        List<Vector3> farPoint = new ();
 
         Vector3 origin = transform.position;
+
         foreach (var point in points)
         {
 
@@ -94,37 +106,60 @@ public class ShadowCaster : MonoBehaviour
             
 
 
-            float offset = 0.03f;
+            float offset = 0.1f;
             Debug.DrawRay(origin, dir * lS, Color.blue);
 
-            RaycastHit2D hit = Physics2D.CircleCast(origin, 0.01f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
+            RaycastHit2D hit = Physics2D.CircleCast(origin, 0.003f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
             if (hit && Vector3.Distance(point, hit.point) <= offset)
             {
-                result.Add(hit.point);
-                result.Add((Vector3)hit.point + dir * mD);
+                firstPoint.Add(hit.point);
+                farPoint.Add((Vector3)hit.point + dir * mD);
                 Debug.DrawLine(origin, hit.point, Color.red);
             }
         }
 
         obs.layer = LayerMask.NameToLayer("Tile");
+        farPoint.Reverse();
+        firstPoint.InsertRange(0, farPoint);
+
+        // 여기서 정렬을 시작!
+        //if (firstPoint.Count > 0)
+        //{
+        //    Vector3 center = Vector3.zero;
+        //    foreach (var p in firstPoint)
+        //        center += p;
+        //    center /= firstPoint.Count;
+
+        //    firstPoint = firstPoint.OrderBy(p =>
+        //    {
+        //        float angle = Mathf.Atan2(p.y - center.y, p.x - center.x) * Mathf.Rad2Deg;
+        //        if (angle < 0) angle += 360f;
+        //        return angle;
+        //    }).ToList();
+        //}
+
+        return firstPoint;
 
 
 
-        var closePoints = result.OrderByDescending(p => Vector3.Distance(p, origin)).Take(result.Count / 2);
-        Vector3 center = new Vector3(closePoints.Average(p => p.x), closePoints.Average(p => p.y));
+        //var closePoints = result.OrderByDescending(p => Vector3.Distance(p, origin)).Take(result.Count / 2);
+        //Vector3 center = new Vector3(closePoints.Average(p => p.x), closePoints.Average(p => p.y));
+        //Debug.DrawLine(center + Vector3.left * 0.03f, center + Vector3.right * 0.03f, Color.blue, 0.1f);
+        //result = result.OrderByDescending(p => Mathf.Atan2(p.y - center.y, p.x - center.x)).ToList();
+
+
         //Vector3 center = new Vector3(
         //    (result.Min(p => p.x) + result.Max(p => p.x)) / 2f,
         //    (result.Min(p => p.y) + result.Max(p => p.y)) / 2f
         //    );
-        Debug.DrawLine(center + Vector3.left * 0.03f, center + Vector3.right * 0.03f, Color.blue, 0.1f);
-        result = result.OrderByDescending(p => Mathf.Atan2(p.y - center.y, p.x - center.x)).ToList();
-        if (result.Count > 0)
-            result.Sort((a, b) =>
-            {
-                float angleA = Mathf.Atan2(a.y - origin.y, a.x - origin.x);
-                float angleB = Mathf.Atan2(b.y - origin.y, b.x - origin.x);
-                return angleA.CompareTo(angleB);
-            });
-        return result;
+        //if (result.Count > 0)
+        //    result.Sort((a, b) =>
+        //    {
+        //        float angleA = Mathf.Atan2(a.y - origin.y, a.x - origin.x);
+        //        float angleB = Mathf.Atan2(b.y - origin.y, b.x - origin.x);
+        //        return angleA.CompareTo(angleB);
+        //    });
+
+
     }
 }
