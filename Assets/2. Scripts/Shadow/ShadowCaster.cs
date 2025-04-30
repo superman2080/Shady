@@ -229,8 +229,8 @@ public class ShadowCaster : MonoBehaviour
         }
 
         Vector2 midDir = (minDir + maxDir).normalized;
-        //if (GetSignedAngleRelativeTo(origin, minHit, midDir) < -270f || GetSignedAngleRelativeTo(origin, maxHit, midDir) > 90)
-        //    midDir *= -1;
+        if (!IsFirstVertice(origin, innerPoints, maxHit, midDir) && !IsLastVertice(origin, innerPoints, maxHit, midDir)) 
+            midDir *= -1;
 
         Debug.DrawRay(origin, midDir * lS, Color.blue, 0.02f);
         //int closestIdx = innerPoints.Select((p, i) => new { Idx = i, Dir = p - origin.normalized}).OrderBy(p => Vector2.Angle(p.Dir, midDir)).First().Idx;
@@ -268,6 +268,17 @@ public class ShadowCaster : MonoBehaviour
         foreach (var point in vertices)
         {
             if (GetSignedAngleRelativeTo(origin, point, basis) > angle)
+                return false;
+        }
+        return true;
+    }
+
+    private bool IsLastVertice(Vector3 origin, List<Vector3> vertices, Vector3 vertice, Vector2 basis)
+    {
+        float angle = GetSignedAngleRelativeTo(origin, vertice, basis);
+        foreach (var point in vertices)
+        {
+            if (GetSignedAngleRelativeTo(origin, point, basis) < angle)
                 return false;
         }
         return true;
