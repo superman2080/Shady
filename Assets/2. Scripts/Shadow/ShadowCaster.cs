@@ -9,8 +9,8 @@ public class ShadowCaster : MonoBehaviour
     public float lightScale = 15f;
     public float minShadowScale = 5f;
 
-    private List<Shadow> shadowList = new List<Shadow>();
-    Vector2 midDir;
+    private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
+
     void Update()
     {
         GenerateShadow(lightScale, 1 << LayerMask.NameToLayer("Tile"));
@@ -20,6 +20,7 @@ public class ShadowCaster : MonoBehaviour
     {
         Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, lS, layer);
 
+        // Object Pool (Generating shadow when collided obstacles)
         for (int i = 0; i < obstacles.Length; i++)
         {
             Shadow? shadow = null;
@@ -36,7 +37,9 @@ public class ShadowCaster : MonoBehaviour
             List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, minShadowScale);
             shadow.GenerateShadow(shadowVertices);
         }
+        //
 
+        // Delete when shadows outnumber obstacles
         if (shadowList.Count > obstacles.Length)
         {
             int removeCount = shadowList.Count - obstacles.Length; // 삭제할 개수 저장
@@ -77,102 +80,9 @@ public class ShadowCaster : MonoBehaviour
                 vertices.Add((boxCollider.transform.TransformPoint(localPoints[i])));
             }
         }
-
-        //Vector3 origin = transform.position; // 빛 위치
-        //int outerPointIdx = vertices.Select((p, i) => new { Point = p, Index = i })
-        //         .OrderBy(x => Vector3.SqrMagnitude(x.Point - origin))
-        //         .First().Index;
-
-        //Debug.Log($"outeridx: {outerPointIdx}");
-
-        //vertices = vertices.OrderBy(p =>
-        //{
-        //    float angle = Mathf.Atan2(p.y - origin.y, p.x - origin.x) * Mathf.Rad2Deg;
-        //    if (angle < 0) angle += 360f;
-        //    return angle;
-        //}).ToList();
-
-        return vertices/*.Skip(outerPointIdx).Concat(vertices.Take(outerPointIdx)).ToList()*/;
+        return vertices;
     }
 
-    //private List<Vector3> GetShadowVertices(GameObject obs, List<Vector3> points, float lS, float mD)
-    //{
-    //    obs.layer = LayerMask.NameToLayer("ScanTile");
-
-    //    List<Vector3> reachablePoint = new ();
-    //    List<Vector3 > firstPoint = new ();
-    //    List<Vector3> farPoint = new ();
-    //    Vector3 origin = transform.position;
-    //    foreach (var point in points)
-    //    {
-
-    //        Vector3 dir = (point - origin).normalized;
-
-    //        float offset = 0.1f;
-
-    //        Debug.DrawRay(origin, dir * lS, Color.blue);
-
-    //        RaycastHit2D hit = Physics2D.CircleCast(origin, 0.003f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
-    //        if (hit && Vector3.Distance(point, hit.point) <= offset)
-    //        {
-    //            float angle = Mathf.Atan2(point.y - origin.y, point.x - origin.x) * Mathf.Rad2Deg;
-    //            reachablePoint.Add(hit.point);
-    //            Debug.DrawLine(origin, hit.point, Color.red);
-    //        }
-    //    }
-
-    //    Vector3 center = new Vector3(reachablePoint.Average(p => p.x), reachablePoint.Average(p => p.y));
-
-    //    float offsetAngle = Mathf.Atan2(center.y - origin.y, center.x - origin.x) * Mathf.Rad2Deg;
-
-    //    reachablePoint = reachablePoint.OrderBy(p =>
-    //    {
-    //        float angle = Mathf.Atan2(p.y - origin.y, p.x - origin.x) * Mathf.Rad2Deg;
-    //        if (angle < 0) angle += 360f;
-    //        Debug.Log($"{p}, {angle + offsetAngle}");
-    //        return angle;
-    //    }).ToList();
-
-    //    foreach (var point in reachablePoint)
-    //    {
-    //        Vector3 dir = (point - origin).normalized;
-    //        float offset = 0.1f;
-    //        RaycastHit2D farHit = Physics2D.CircleCast(point + dir * offset, 0.003f, dir, lS - Vector3.Distance(origin, point), 1 << LayerMask.NameToLayer("ScanTile"));
-
-    //        if (farHit && Vector3.Distance(point, farHit.point) > offset * 1.5f)
-    //        {
-    //            firstPoint.Add(point);
-    //            farPoint.Add((Vector3)farHit.point + dir * mD);
-    //            firstPoint.Add(farHit.point);
-    //        }
-    //        else
-    //        {
-    //            firstPoint.Add(point);
-    //            farPoint.Add(point + dir * mD);
-    //        }
-    //    }
-
-    //    RaycastHit2D farHit = Physics2D.CircleCast(point + dir * offset, 0.003f, dir, lS - Vector3.Distance(origin, point), 1 << LayerMask.NameToLayer("ScanTile"));
-
-    //    if (farHit && Vector3.Distance(point, farHit.point) > offset * 1.5f)
-    //    {
-    //        firstPoint.Add(hit.point);
-    //        firstPoint.Add(farHit.point);
-    //        farPoint.Add((Vector3)farHit.point + dir * mD);
-    //    }
-    //    else
-    //    {
-    //        firstPoint.Add((hit.point));
-    //        farPoint.Add((Vector3)hit.point + dir * mD);
-    //    }
-
-    //    obs.layer = LayerMask.NameToLayer("Tile");
-    //    farPoint.Reverse();
-    //    firstPoint.InsertRange(0, farPoint);
-
-    //    return firstPoint;
-
-    //}
 
     private List<Vector3> GetShadowVertices(GameObject obs, List<Vector3> points, float lS, float mD)
     {
@@ -187,6 +97,7 @@ public class ShadowCaster : MonoBehaviour
         float maxAngle = float.NegativeInfinity;
         Vector2 minDir = Vector2.zero;
         Vector2 maxDir = Vector2.zero;
+        Vector2 minHit = Vector2.zero;
         Vector2 maxHit = Vector2.zero;
 
         foreach (var point in points)
@@ -213,6 +124,7 @@ public class ShadowCaster : MonoBehaviour
                     {
                         minAngle = eachAngle;
                         minDir = new Vector2(Mathf.Cos(minAngle * Mathf.Deg2Rad), Mathf.Sin(minAngle * Mathf.Deg2Rad));
+                        minHit = point;
                     }
                     if (maxAngle < eachAngle)
                     {
@@ -229,13 +141,9 @@ public class ShadowCaster : MonoBehaviour
         }
 
         Vector2 midDir = (minDir + maxDir).normalized;
-        if (!IsFirstVertice(origin, innerPoints, maxHit, midDir) && !IsLastVertice(origin, innerPoints, maxHit, midDir)) 
+        if (!IsFirstVertice(origin, innerPoints, maxHit, midDir) && !IsLastVertice(origin, innerPoints, maxHit, midDir) ||
+            !IsFirstVertice(origin, innerPoints, minHit, midDir) && !IsLastVertice(origin, innerPoints, minHit, midDir)) 
             midDir *= -1;
-
-        Debug.DrawRay(origin, midDir * lS, Color.blue, 0.02f);
-        //int closestIdx = innerPoints.Select((p, i) => new { Idx = i, Dir = p - origin.normalized}).OrderBy(p => Vector2.Angle(p.Dir, midDir)).First().Idx;
-        //Debug.Log($"{closestIdx}: {innerPoints[closestIdx]}");
-
 
         innerPoints = innerPoints.OrderByDescending(p => {
             float angle = GetSignedAngleRelativeTo(origin, p, midDir); // Subtract each angle by offset angle
@@ -244,8 +152,7 @@ public class ShadowCaster : MonoBehaviour
 
 
 
-        outerPoints = outerPoints.OrderBy(p => {
-            //float angle = (Mathf.Atan2(p.y - origin.y, p.x - origin.x) * Mathf.Rad2Deg) + Mathf.Atan2(midDir.y, midDir.x) * Mathf.Rad2Deg;        
+        outerPoints = outerPoints.OrderBy(p => {  
             float angle = GetSignedAngleRelativeTo(origin, p, midDir); // Subtract each angle by offset angle
             return angle;
         }).ToList();
