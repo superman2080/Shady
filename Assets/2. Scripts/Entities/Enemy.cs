@@ -7,6 +7,11 @@ public class Enemy : Entity
         base.Start();
     }
 
+    private void Update()
+    {
+        
+    }
+
     protected override void OnEntityDied(Entity caster)
     {
     }
