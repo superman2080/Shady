@@ -1,13 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using System.Linq;
+using System;
 
 public class PlayerCtrl : Entity
 {
     public float dashDistance;
     public float dashTime;
+
     private TrailRenderer tR;
+    [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
     private Coroutine dashCor;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -47,11 +51,12 @@ public class PlayerCtrl : Entity
 
     private IEnumerator ShadowDashCor(float castingTime, float dashDist, float dashTime)
     {
+        // Start casting
         tR.enabled = true;
-
-        for (float i = 0; i <= castingTime; i += Time.deltaTime) 
+        UI.Instance.Fade(false, Color.black, castingTime, 0.5f);
+        for (float eT = 0; eT <= castingTime; eT += Time.deltaTime) 
         {
-            Time.timeScale = Mathf.Lerp(1f, 0.1f, i / castingTime);
+            Time.timeScale = Mathf.Lerp(1f, 0.1f, eT / castingTime);
             yield return null;
         }
 
@@ -59,6 +64,8 @@ public class PlayerCtrl : Entity
         Vector2 moveTo = Vector2.zero;
         IDamagable[] targets;
         Vector2 targetPos = Vector2.zero;
+
+
         while (true)
         {
             yield return null;
@@ -69,15 +76,17 @@ public class PlayerCtrl : Entity
                 Vector2 dir = (moveTo - origin).normalized;
                 Debug.DrawRay(origin, dir * dashDist, Color.red, 0.5f);
                 RaycastHit2D[] targetHit = Physics2D.RaycastAll(transform.position, dir, dashDist, 1 << LayerMask.NameToLayer("Entity"));
-                if (targetHit.Any(t => t.collider.GetComponent<Entity>() is Enemy) && targetHit.Last(t => t.collider.GetComponent<Entity>() is Enemy))
+                var lastTarget = targetHit.LastOrDefault(t => t.collider.GetComponent<Entity>() is Enemy && t.collider.GetComponent<Enemy>().IsInShadow().isIn);
+                if (lastTarget != default)
                 {
-                    targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).Where(comp => comp != null).ToArray();
-                    targetPos = (Vector2)targetHit.Last().transform.position - (targetHit.Last().point - (Vector2)targetHit.Last().transform.position) * 2;
+                    targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).Where(comp => comp != null).Take(Array.IndexOf(targetHit, lastTarget)).ToArray();
+                    targetPos = (Vector2)lastTarget.transform.position - (lastTarget.point - (Vector2)lastTarget.transform.position) * 2;
                     break;
                 }
                 else
                 {
                     Time.timeScale = 1;
+                    UI.Instance.Fade(true, Color.black, 0.1f, 0.5f);
                     tR.enabled = false;
                     dashCor = null;
                     Debug.Log("Failed casting");
@@ -88,6 +97,14 @@ public class PlayerCtrl : Entity
 
 
 
+        Time.timeScale = 1;
+        UI.Instance.Fade(true, Color.black, 0.1f, 0.5f);
+
+        for (float eT = 0; eT <= dashTime; eT += Time.deltaTime) 
+        {
+            transform.position = Vector2.Lerp(origin, targetPos, dashSpeed.Evaluate(eT / dashTime));
+            yield return null;
+        }
 
         foreach (var target in targets)
         {
@@ -98,12 +115,6 @@ public class PlayerCtrl : Entity
             }
         }
 
-        for (float i = 0; i < dashTime; i += Time.deltaTime) 
-        {
-            Time.timeScale = Mathf.Lerp(0.1f, 1, i / dashTime);
-            transform.position = Vector2.Lerp(origin, targetPos, i / dashTime);
-            yield return null;
-        }
         tR.enabled = false;
         dashCor = null;
     }
