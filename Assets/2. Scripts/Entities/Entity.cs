@@ -5,6 +5,7 @@ using System.Linq;
 public abstract class Entity : MonoBehaviour, IDamagable
 {
     public Rigidbody2D rb2d { get; private set; }
+    [HideInInspector] public Sprite sprite;
     protected Collider2D col;
     protected Stat stat;
     [SerializeField] public float HP { get; protected set; }
@@ -16,6 +17,7 @@ public abstract class Entity : MonoBehaviour, IDamagable
     {
         col = gameObject.GetComponent<Collider2D>();
         rb2d = gameObject.GetComponent<Rigidbody2D>();
+        sprite = gameObject.GetComponent<Sprite>();
         stat = new Stat();
         stat.InitStat();
         HP = stat.Get(StatType.MAX_HP);

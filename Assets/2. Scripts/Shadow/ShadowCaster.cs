@@ -5,19 +5,19 @@ using System.Linq;
 
 public class ShadowCaster : MonoBehaviour
 {
-    public float lightScale = 15f;
+    public float lightScale = 20f;                  // Light source scale (Sense distance is )
     public float minShadowScale = 5f;
 
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
 
     void Update()
     {
-        GenerateShadow(lightScale, 1 << LayerMask.NameToLayer("Tile"));
+        GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
     }
 
-    private void GenerateShadow(float lS, int layer)
+    private void GenerateShadow(float lS, float mS, int layer)
     {
-        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, lS, layer);
+        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
         // Object Pool (Generating shadow when collided obstacles)
         for (int i = 0; i < obstacles.Length; i++)
@@ -32,8 +32,8 @@ public class ShadowCaster : MonoBehaviour
             {
                 shadow = shadowList[i];
             }
-            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], lS, minShadowScale);
-            List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, minShadowScale);
+            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], lS, mS);
+            List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, mS);
             shadow.GenerateShadow(shadowVertices);
         }
         //
@@ -60,7 +60,7 @@ public class ShadowCaster : MonoBehaviour
         {
             for (int i = 0; i < polyCollider.points.Length; i++)
             {
-                vertices.Add((collider.transform.TransformPoint(polyCollider.points[i])));
+                vertices.Add(collider.transform.TransformPoint(polyCollider.points[i]));
             }
         }
         else if (collider is BoxCollider2D boxCollider)
@@ -108,16 +108,19 @@ public class ShadowCaster : MonoBehaviour
             RaycastHit2D hit = Physics2D.CircleCast(origin, 0.005f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
             RaycastHit2D farHit = Physics2D.CircleCast(point + dir * offset, 0.003f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
 
-            if(hit && Vector3.Distance(point, hit.point) <= offset)
+
+            if (hit && Vector3.Distance(point, hit.point) <= offset)         // When cast inner point
             {
                 innerPoints.Add(point);
-                if (farHit && Vector3.Distance(point, farHit.point) > offset * 1.5f)
+                if (farHit && Vector3.Distance(point, farHit.point) > offset * 1.5f)        // 
                 {
                     innerPoints.Add(farHit.point);
                 }
                 else if (!farHit)
                 {
-                    outerPoints.Add(point + dir * mD);
+                    float shadowLen = lS - Vector2.Distance(origin, point) > mD ? lS - Vector2.Distance(origin, point) : mD;
+
+                    outerPoints.Add(point + dir * shadowLen);
                     float eachAngle = Mathf.Atan2(point.y - origin.y, point.x - origin.x) * Mathf.Rad2Deg;      // Most largest angle in points
                     if (minAngle > eachAngle)
                     {
@@ -135,7 +138,8 @@ public class ShadowCaster : MonoBehaviour
             }
             else if(hit && Vector3.Distance(point, hit.point) > offset * 1.5f)
             {
-                outerPoints.Add(point + dir * mD);
+                float shadowLen = lS - Vector2.Distance(origin, point) > mD ? lS - Vector2.Distance(origin, point) : mD;
+                outerPoints.Add(point + dir * shadowLen);
             }
         }
 
