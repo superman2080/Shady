@@ -69,6 +69,7 @@ public class PlayerCtrl : Entity
         while (true)
         {
             yield return null;
+
             if (Input.GetMouseButtonUp(0))
             {
                 moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
