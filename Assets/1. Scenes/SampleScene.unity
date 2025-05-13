@@ -1507,7 +1507,7 @@ Transform:
   m_GameObject: {fileID: 1534078669}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.2, y: -2, z: 0}
+  m_LocalPosition: {x: -5.03, y: -0.17, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1526,6 +1526,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprite: {fileID: 0}
+  recogDist: 10
+  sightAngle: 30
 --- !u!50 &1534078674
 Rigidbody2D:
   serializedVersion: 5
@@ -1572,7 +1574,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1645693217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1586,6 +1588,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprite: {fileID: 0}
+  recogDist: 10
+  sightAngle: 30
 --- !u!50 &1645693218
 Rigidbody2D:
   serializedVersion: 5
@@ -1713,7 +1717,7 @@ Transform:
   m_GameObject: {fileID: 1645693216}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.4, y: 0.04, z: 0}
+  m_LocalPosition: {x: 12.18, y: 2.49, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

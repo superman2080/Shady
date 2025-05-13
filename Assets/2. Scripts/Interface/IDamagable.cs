@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public interface IDamagable
+public interface IDamagable 
 {
     public float HP { get; }
     public void TakeDamage(Entity caster, float amount);
