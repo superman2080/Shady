@@ -5,7 +5,6 @@ using System.Linq;
 
 public class Enemy : Entity
 {
-
     public StateMachine<Enemy>? stateMachine;
     public float recogDist;
     public float engTime;
