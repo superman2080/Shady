@@ -2,32 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.AI;
 
 public class Enemy : Entity
 {
+    [HideInInspector] public StateMachine<Enemy>? stateMachine;
+    [HideInInspector] public NavMeshAgent? navMesh;
+    public Vector2 targetPos;
+    public float searchRange;
+    public bool isLookAtTarget { get; set; } = true;
+    public float rotationSpeed = 150f;
 
-    public StateMachine<Enemy>? stateMachine;
+    [Header("Related to sight")]
     public float recogDist;
-    public float engTime;
     [Range(30, 90)] public float sightAngle;
-    private int recogLayer;
+    public LayerMask recogLayer;
+
+
 
 
     protected override void Start()
     {
         base.Start();
-        stateMachine = new StateMachine<Enemy>(this);
-        stateMachine.ChangeState(new Patrol());
+        navMesh = gameObject.GetComponent<NavMeshAgent>();
+        navMesh.updateRotation = false;
+        navMesh.updateUpAxis = false;
 
-        recogLayer = (1 << LayerMask.NameToLayer("Player")) | (1 << LayerMask.NameToLayer("Tile")) | (1 << LayerMask.NameToLayer("ScanTile")) | (1 << LayerMask.NameToLayer("Shadow"));
+        stateMachine = new StateMachine<Enemy>(this, new Patrol());
+        navMesh.speed = stat.Get(StatType.MOVE_SPEED);
     }
 
     protected virtual void Update()
     {
         stateMachine?.Update();
+        LookAtTarget(isLookAtTarget, rotationSpeed);
     }
 
-    protected List<GameObject>? FieldOfView(float range, float angle, int layer)
+    public List<GameObject>? FieldOfView(float range, float angle, int layer)
     {
         Vector2 origin = transform.position;
         List<GameObject> result = new List<GameObject>();
@@ -51,29 +62,13 @@ public class Enemy : Entity
         return result;
     }
 
-    //public EnemyState GetEnemyState(EnemyState e)
-    //{
-    //    List<GameObject> objList = FieldOfView(recogDist, sightAngle, recogLayer);
-    //    switch (e)
-    //    {
-    //        case EnemyState.Patrol:
-    //            if(objList.Exists(o => o.TryGetComponent(out PlayerCtrl p) == true))
-    //            {
-    //                return EnemyState.Suspiocion;
-    //            }
-    //            else
-    //            {
-    //                return EnemyState.Patrol;
-    //            }
-    //        case EnemyState.Suspiocion:
-
-    //            break;
-    //        case EnemyState.Engagement:
-    //            break;
-    //        default:
-    //            break;
-    //    }
-    //}
+    public bool IsPlayerInSight(float range, float angle, int layer)
+    {
+        List<GameObject>? list = FieldOfView(range, angle, layer);
+        if (list == null)
+            return false;
+        return list.Exists(obj => obj.TryGetComponent(out PlayerCtrl player));
+    }
 
     private void OnDrawGizmos()
     {
@@ -96,16 +91,52 @@ public class Enemy : Entity
 
     protected override void OnEntityDied(Entity caster)
     {
-        throw new System.NotImplementedException();
     }
 
     protected override void OnTakeDamage(Entity caster, float amount)
     {
-        throw new System.NotImplementedException();
     }
 
     protected override void OnEntityHeal(Entity caster, float amount)
     {
-        throw new System.NotImplementedException();
+    }
+
+    public bool HasReachedDestination(Vector2 pos)
+    {
+#pragma warning disable CS8602
+        if (!navMesh.pathPending && navMesh.remainingDistance <= navMesh.stoppingDistance && (!navMesh.hasPath || navMesh.velocity.sqrMagnitude == 0f))
+#pragma warning restore CS8602 
+            return true;
+        else
+            return false;
+    }
+
+    public Vector2 RandomReachablePosition(float range)
+    {
+        if (navMesh == null)
+            return Vector2.zero;
+        int tryCnt = 0;
+        while (tryCnt < 100)
+        {
+            Vector2 samplePos = new Vector2(Random.Range(-range, range), Random.Range(-range, range));
+            var path = new NavMeshPath();
+            if (navMesh.CalculatePath(samplePos, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                return samplePos;
+            }
+            tryCnt++;
+        }
+        return Vector2.zero;
+    }
+
+    private void LookAtTarget(bool lookAt, float rotSpeed)
+    {
+        if (lookAt)
+        {
+            Vector2 direction = (targetPos - (Vector2)transform.position).normalized;
+            float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
+        }
     }
 }

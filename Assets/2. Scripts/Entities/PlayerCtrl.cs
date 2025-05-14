@@ -9,6 +9,7 @@ public class PlayerCtrl : Entity
 {
     public float dashDistance;
     public float dashTime;
+    public LayerMask attackLayer;
 
     private TrailRenderer tR;
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
@@ -76,7 +77,7 @@ public class PlayerCtrl : Entity
 
                 Vector2 dir = (moveTo - origin).normalized;
                 Debug.DrawRay(origin, dir * dashDist, Color.red, 0.5f);
-                RaycastHit2D[] targetHit = Physics2D.RaycastAll(transform.position, dir, dashDist, 1 << LayerMask.NameToLayer("Entity"));
+                RaycastHit2D[] targetHit = Physics2D.RaycastAll(transform.position, dir, dashDist, attackLayer);
                 var lastTarget = targetHit.LastOrDefault(t => t.collider.GetComponent<Entity>() is Enemy && t.collider.GetComponent<Enemy>().IsInShadow().isIn);
                 if (lastTarget != default)
                 {
