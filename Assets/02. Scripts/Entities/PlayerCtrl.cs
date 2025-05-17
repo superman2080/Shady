@@ -5,7 +5,7 @@ using UnityEditor;
 using System.Linq;
 using System;
 
-public class PlayerCtrl : Entity
+public class PlayerCtrl : Entity, ICameraLookable
 {
     public float dashDistance;
     public float dashTime;
@@ -14,6 +14,11 @@ public class PlayerCtrl : Entity
     private TrailRenderer tR;
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
     private Coroutine dashCor;
+
+    void OnEnable()
+    {
+        EnableCamera();
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected override void Start()
@@ -30,7 +35,12 @@ public class PlayerCtrl : Entity
         {
             ShadowDash(0.2f, dashDistance, dashTime);
         }
-    } 
+    }
+
+    void OnDisable()
+    {
+        DisableCamera();
+    }
 
     protected override void OnEntityDied(Entity caster)
     {
@@ -119,5 +129,15 @@ public class PlayerCtrl : Entity
 
         tR.enabled = false;
         dashCor = null;
+    }
+
+    public void EnableCamera()
+    {
+        MainCineCam.Instance.targetTrList.Add(transform);
+    }
+
+    public void DisableCamera()
+    {
+        MainCineCam.Instance.targetTrList.Remove(transform);
     }
 }

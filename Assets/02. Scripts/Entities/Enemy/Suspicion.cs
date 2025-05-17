@@ -58,7 +58,6 @@ public class Suspicion : IState<Enemy>
                 idx = idx < searchPos.Length - 1 ? idx + 1 : 0;
             }
         }
-        Debug.Log(caster.targetPos);
     }
 
     public void Finish(Enemy caster)
