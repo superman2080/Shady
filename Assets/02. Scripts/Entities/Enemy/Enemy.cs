@@ -8,8 +8,12 @@ public class Enemy : Entity
 {
     [HideInInspector] public StateMachine<Enemy>? stateMachine;
     [HideInInspector] public NavMeshAgent? navMesh;
-    public Vector2 targetPos;
+    [HideInInspector] public Vector2 targetPos;
+
+    [Header("Related to suspicion state")]
+    public float searchTime;
     public float searchRange;
+    public float engageTime;
     public bool isLookAtTarget { get; set; } = true;
     public float rotationSpeed = 150f;
 
@@ -29,7 +33,9 @@ public class Enemy : Entity
         navMesh.updateUpAxis = false;
 
         stateMachine = new StateMachine<Enemy>(this, new Patrol());
+        stat.SetDefault(StatType.MOVE_SPEED, 3);
         navMesh.speed = stat.Get(StatType.MOVE_SPEED);
+        navMesh.angularSpeed = rotationSpeed;
     }
 
     protected virtual void Update()
@@ -118,7 +124,7 @@ public class Enemy : Entity
         int tryCnt = 0;
         while (tryCnt < 100)
         {
-            Vector2 samplePos = new Vector2(Random.Range(-range, range), Random.Range(-range, range));
+            Vector2 samplePos = (Vector2)transform.position + new Vector2(Random.Range(-range, range), Random.Range(-range, range));
             var path = new NavMeshPath();
             if (navMesh.CalculatePath(samplePos, path) && path.status == NavMeshPathStatus.PathComplete)
             {
@@ -127,6 +133,67 @@ public class Enemy : Entity
             tryCnt++;
         }
         return Vector2.zero;
+    }
+
+    public Vector2 RandomReachablePosition(Vector2 origin, float range)
+    {
+        if (navMesh == null)
+            return Vector2.zero;
+        int tryCnt = 0;
+        while (tryCnt < 100)
+        {
+            Vector2 samplePos = origin + new Vector2(Random.Range(-range, range), Random.Range(-range, range));
+            var path = new NavMeshPath();
+            if (navMesh.CalculatePath(samplePos, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                return samplePos;
+            }
+            tryCnt++;
+        }
+        return Vector2.zero;
+    }
+
+    public Vector2[] RandomReachablePosition(Vector2 origin, float range, int len, float interval)
+    {
+        Vector2[] result = new Vector2[len];
+        for (int i = 0; i < len; i++)
+        {
+            Vector2 candidate;
+            bool valid = false;
+            int tryCnt = 0;
+
+            do
+            {
+                candidate = RandomReachablePosition(origin, range);
+
+                for (int j = 0; j < i; j++)
+                {
+                    if(Vector2.Distance(candidate, result[i]) < interval)
+                    {
+                        valid = true;
+                        break;
+                    }    
+                }
+                tryCnt++;
+                if (tryCnt > 30)
+                    break;
+            } while (valid);
+            result[i] = candidate;
+        }
+        return result;
+    }
+
+    public void CallOtherEnemies(float range)
+    {
+        Vector2 origin = transform.position;
+        Enemy[] enemies = Physics2D.OverlapCircleAll(origin, range, 1 << LayerMask.NameToLayer("Enemy")).Select(col => col.GetComponent<Enemy>()).ToArray();
+        if (enemies.Length > 0)
+        {
+            foreach (var enemy in enemies)
+            {
+                enemy.stateMachine?.ChangeState(new Engagement());
+            }
+        }
     }
 
     private void LookAtTarget(bool lookAt, float rotSpeed)

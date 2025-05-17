@@ -3,16 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-public class ShadowCaster : MonoBehaviour
+public class ShadowCaster : MonoBehaviour, ICameraLookable
 {
-    public float lightScale = 20f;                  // Light source scale (Sense distance is )
+    public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
     public float minShadowScale = 5f;
-
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
+
+    void OnEnable()
+    {
+        EnableCamera();
+    }
 
     void Update()
     {
         GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
+    }
+
+    void OnDisable()
+    {
+        DisableCamera();
     }
 
     private void GenerateShadow(float lS, float mS, int layer)
@@ -192,5 +201,15 @@ public class ShadowCaster : MonoBehaviour
                 return false;
         }
         return true;
+    }
+
+    public void EnableCamera()
+    {
+        MainCineCam.Instance.targetTrList.Add(transform);
+    }
+
+    public void DisableCamera()
+    {
+        MainCineCam.Instance.targetTrList.Remove(transform);
     }
 }
