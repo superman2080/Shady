@@ -1,20 +1,16 @@
 using UnityEngine;
-using System.Collections.Generic;
 using UnityEngine.AI;
 
 public class Patrol : IState<Enemy>
 {
-    private List<Vector2> patrolPos;
+    private Vector2[] patrolPos = new Vector2[3];
     private int idx = 0;
 
     public void Start(Enemy caster)
     {
-        patrolPos = new List<Vector2>();
+        Debug.LogError("Start Patrol");
         
-        for (int i = 0; i < 3; i++)
-        {
-            patrolPos.Add(caster.RandomReachablePosition(caster.recogDist));
-        }
+        patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 3, 3);
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
         caster.isLookAtTarget = true;
@@ -24,7 +20,7 @@ public class Patrol : IState<Enemy>
     {
         if(caster.HasReachedDestination(patrolPos[idx]))
         {
-            idx = idx < patrolPos.Count - 1 ? idx + 1 : 0;
+            idx = idx < patrolPos.Length - 1 ? idx + 1 : 0;
             caster.navMesh.SetDestination(patrolPos[idx]);
             caster.targetPos = patrolPos[idx];
         }
@@ -38,6 +34,7 @@ public class Patrol : IState<Enemy>
 
     public void Finish(Enemy caster)
     {
+        Debug.LogError("End Patrol");
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
     }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class StateMachine<T>
 {
-    public IState<T> state;
+    private IState<T> state;
     private T caster;
 
 
