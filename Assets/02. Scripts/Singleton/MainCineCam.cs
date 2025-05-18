@@ -4,17 +4,17 @@ using UnityEngine;
 
 public class MainCineCam: Singleton<MainCineCam>
 {
-    public CinemachineVirtualCamera vCam;
-    public Transform target;
+    [HideInInspector] public CinemachineVirtualCamera vCam { get; private set; }
+    [HideInInspector] public Transform target { get; private set; }
     public List<Transform> targetTrList = new List<Transform>();
     public StateMachine<MainCineCam> stateMachine { get; private set; }
-    public float minOrthoSize = 6;
+    [Min(10)] public float minOrthoSize;
 
     void Start()
     {
         vCam = gameObject.GetComponentInChildren<CinemachineVirtualCamera>();
+        target = transform.Find("Target");
         stateMachine = new StateMachine<MainCineCam>(this, new CSingleLookAt());
-        SetOrthoSize(minOrthoSize);
     }
 
     void Update()

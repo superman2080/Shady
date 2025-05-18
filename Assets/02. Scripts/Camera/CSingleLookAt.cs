@@ -4,7 +4,7 @@ public class CSingleLookAt : IState<MainCineCam>
 {
     public void Start(MainCineCam caster)
     {
-
+        caster.SetOrthoSize(caster.minOrthoSize);
     }
 
     public void Update(MainCineCam caster)

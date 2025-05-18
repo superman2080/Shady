@@ -16,7 +16,7 @@ public class Suspicion : IState<Enemy>
 
     public void Start(Enemy caster)
     {
-        Debug.LogError("Start Suspicion");
+        Debug.LogWarning("Start Suspicion");
         originPos = caster.transform.position;
         caster.navMesh.SetDestination(suspicionPos);
         suspicionPos = caster.targetPos;
@@ -62,7 +62,7 @@ public class Suspicion : IState<Enemy>
 
     public void Finish(Enemy caster)
     {
-        Debug.LogError("End Suspicion");
+        Debug.LogWarning("End Suspicion");
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
     }
