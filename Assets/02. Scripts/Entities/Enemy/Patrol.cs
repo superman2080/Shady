@@ -8,7 +8,7 @@ public class Patrol : IState<Enemy>
 
     public void Start(Enemy caster)
     {
-        Debug.LogError("Start Patrol");
+        Debug.LogWarning("Start Patrol");
         
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 3, 3);
         caster.navMesh.SetDestination(patrolPos[idx]);
@@ -34,7 +34,7 @@ public class Patrol : IState<Enemy>
 
     public void Finish(Enemy caster)
     {
-        Debug.LogError("End Patrol");
+        Debug.LogWarning("End Patrol");
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
     }

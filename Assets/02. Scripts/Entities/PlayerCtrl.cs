@@ -7,13 +7,21 @@ using System;
 
 public class PlayerCtrl : Entity, ICameraLookable
 {
+
+    #region Light Attribute
+    public GameObject light;
+    [Min(1)] public float throwPower;
+    public LayerMask attackLayer;
+    private Coroutine throwCor;
+    #endregion
+
+    #region Shadow Attribute
     public float dashDistance;
     public float dashTime;
-    public LayerMask attackLayer;
-
-    private TrailRenderer tR;
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
+    private TrailRenderer tR;
     private Coroutine dashCor;
+    #endregion
 
     void OnEnable()
     {
@@ -26,20 +34,42 @@ public class PlayerCtrl : Entity, ICameraLookable
         base.Start();
         tR = gameObject.GetComponent<TrailRenderer>();
         tR.enabled = false;
+
+        #region Debug...
+        stat.SetDefault(StatType.MOVE_SPEED, 3);
+        #endregion
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            ShadowDash(0.2f, dashDistance, dashTime);
-        }
+        Move();
     }
 
     void OnDisable()
     {
         DisableCamera();
+    }
+
+    private void Move()
+    {
+        var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")) * stat.Get(StatType.MOVE_SPEED) * Time.deltaTime;
+        rb2d.MovePosition((Vector2)transform.position + inputVector);
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            ShadowDash(0.2f, dashDistance, dashTime);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            ThrowLight(throwPower);
+        }
+    }
+
+    private void ThrowLight(float tP)
+    {
+        if (throwCor == null)
+            throwCor = StartCoroutine(ThrowLightCor(tP));
     }
 
     protected override void OnEntityDied(Entity caster)
@@ -131,6 +161,26 @@ public class PlayerCtrl : Entity, ICameraLookable
         dashCor = null;
     }
 
+    IEnumerator ThrowLightCor(float tP)
+    {
+        while (!Input.GetMouseButtonUp(0))
+        {
+            yield return null;
+            //if ()
+            //    break;
+            //else if (Input.anyKey)
+            //    yield break;
+
+
+        }
+
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
+        GameObject obj = Instantiate(light, transform.position, Quaternion.identity);
+        obj.GetComponent<Rigidbody2D>().AddForce(dir * tP, ForceMode2D.Impulse);
+        throwCor = null;
+    }
+
     public void EnableCamera()
     {
         MainCineCam.Instance.targetTrList.Add(transform);
@@ -139,5 +189,6 @@ public class PlayerCtrl : Entity, ICameraLookable
     public void DisableCamera()
     {
         MainCineCam.Instance.targetTrList.Remove(transform);
+
     }
 }
