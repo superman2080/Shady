@@ -20,12 +20,6 @@ public class ShadowPool : Singleton<ShadowPool>
         return GetChildShadowList(true).Exists((s) => s == comp && s.lightSource != null);
     }
 
-    //public bool IsExistingUsableShadow()
-    //{
-    //    return GetChildShadowList(true).Find((n) => n.gameObject.activeSelf == false);
-    //}
-
-
     /*
         Getting all children shadows
         
