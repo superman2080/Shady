@@ -20,8 +20,9 @@ public class PlayerCtrl : Entity, ICameraLookable
     public float dashDistance;
     public float dashTime;
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
-    private TrailRenderer tR;
+    private TrailRenderer dashTrail;
     private Coroutine dashCor;
+    private LineRenderer dashTrajectory;
     #endregion
 
 
@@ -35,9 +36,12 @@ public class PlayerCtrl : Entity, ICameraLookable
     protected override void Start()
     {
         base.Start();
-        tR = gameObject.GetComponent<TrailRenderer>();
-        tR.enabled = false;
+        dashTrail = gameObject.GetComponent<TrailRenderer>();
+        dashTrail.enabled = false;
         WeaponController = new WeaponCtrl(this, new Dagger());
+
+        dashTrajectory = gameObject.GetComponent<LineRenderer>();
+        dashTrajectory.enabled = false;
         #region Debug...
         stat.SetDefault(StatType.MOVE_SPEED, 5);
         #endregion
@@ -107,7 +111,8 @@ public class PlayerCtrl : Entity, ICameraLookable
     private IEnumerator ShadowDashCor(float castingTime, float dashDist, float dashTime)
     {
         // Start casting
-        tR.enabled = true;
+
+
         UI.Instance.Fade(false, Color.black, castingTime, 0.5f);
         for (float eT = 0; eT <= castingTime; eT += Time.deltaTime) 
         {
@@ -119,31 +124,41 @@ public class PlayerCtrl : Entity, ICameraLookable
         Vector2 moveTo = Vector2.zero;
         IDamagable[] targets;
         Vector2 targetPos = Vector2.zero;
-
+        dashTrail.enabled = true;
+        dashTrajectory.enabled = true;
 
         while (true)
         {
             yield return null;
+            // Draw dash trajectory
+            moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 dir = (moveTo - origin).normalized;
+            Vector2 maxDashPos = origin + dir * dashDist;
+            targetPos = Vector2.Distance(origin, moveTo) > dashDist ? maxDashPos : moveTo;
+            dashTrajectory.SetPosition(0, origin);
+            dashTrajectory.SetPosition(1, targetPos);
+            //
+
 
             if (Input.GetMouseButtonUp(0))
             {
-                moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                dashTrajectory.enabled = false;
+                RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
+                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Mathf.Infinity, 
+                    1 << LayerMask.NameToLayer("Shadow"));
 
-                Vector2 dir = (moveTo - origin).normalized;
-                Debug.DrawRay(origin, dir * dashDist, Color.red, 0.5f);
-                RaycastHit2D[] targetHit = Physics2D.RaycastAll(transform.position, dir, dashDist, attackLayer);
-                var lastTarget = targetHit.LastOrDefault(t => t.collider.GetComponent<Entity>() is Enemy && t.collider.GetComponent<Enemy>().IsInShadow().isIn);
-                if (lastTarget != default)
+                if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow"))
                 {
-                    targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).Where(comp => comp != null).Take(Array.IndexOf(targetHit, lastTarget)).ToArray();
-                    targetPos = (Vector2)lastTarget.transform.position - (lastTarget.point - (Vector2)lastTarget.transform.position) * 2;
+                    moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, attackLayer);
+                    targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
                     break;
                 }
                 else
                 {
                     Time.timeScale = 1;
                     UI.Instance.Fade(true, Color.black, 0.1f, 0.5f);
-                    tR.enabled = false;
+                    dashTrail.enabled = false;
                     dashCor = null;
                     Debug.Log("Failed casting");
                     yield break;
@@ -166,12 +181,12 @@ public class PlayerCtrl : Entity, ICameraLookable
         {
             if (!target.Equals(this))
             {
-                Debug.Log(target.GetType().Name);
                 target.TakeDamage(this, stat.Get(StatType.DAMAGE));
+                Debug.Log(target.GetType().Name);
             }
         }
 
-        tR.enabled = false;
+        dashTrail.enabled = false;
         dashCor = null;
     }
 
