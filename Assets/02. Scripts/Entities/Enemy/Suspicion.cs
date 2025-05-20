@@ -30,7 +30,7 @@ public class Suspicion : IState<Enemy>
             detectTime += Time.deltaTime;
             Vector2 playerPos = caster.FieldOfView(caster.recogDist, caster.sightAngle, caster.recogLayer).Find(obj => obj.TryGetComponent(out PlayerCtrl player)).transform.position;
             Vector2 targetPos = playerPos - (((Vector2)caster.transform.position - playerPos).normalized * -3);
-            caster.navMesh.destination = playerPos;
+            caster.navMesh.destination = targetPos;
             caster.targetPos = playerPos;
             if (detectTime >= caster.engageTime)
             {

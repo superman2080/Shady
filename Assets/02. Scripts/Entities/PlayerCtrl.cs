@@ -7,12 +7,15 @@ using System;
 
 public class PlayerCtrl : Entity, ICameraLookable
 {
+    [Header("Related to light")]
     #region Light Attribute
     public GameObject lightPrefab;
     [Min(1)] public float throwPower;
+    public float retrieveDist;
     private Coroutine throwCor;
     #endregion
 
+    [Header("Related to shadow")]
     #region Shadow Attribute
     public float dashDistance;
     public float dashTime;
@@ -65,7 +68,16 @@ public class PlayerCtrl : Entity, ICameraLookable
         }
         if (Input.GetMouseButton(0))
         {
-            Attack(this, stat.Get(StatType.DAMAGE));
+            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
+                Camera.main.ScreenPointToRay(Input.mousePosition).direction, Mathf.Infinity, 1 << LayerMask.NameToLayer("Light"));
+            if(hit && Vector2.Distance(transform.position, hit.transform.position) <= retrieveDist)
+            {
+                Destroy(hit.collider.gameObject);
+            }
+            else
+            {
+                Attack(this, stat.Get(StatType.DAMAGE));
+            }
         }
     }
 

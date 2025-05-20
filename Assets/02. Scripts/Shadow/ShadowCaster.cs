@@ -32,6 +32,11 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
 
     void OnDisable()
     {
+        foreach (var shadow in shadowList)
+        {
+            shadow.gameObject.SetActive(false);
+        }
+        shadowList.Clear();
         DisableCamera();
     }
 
