@@ -8,15 +8,26 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
     public float minShadowScale = 5f;
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
-
+    private PlayerCtrl player;
     void OnEnable()
     {
         EnableCamera();
+        player = FindAnyObjectByType<PlayerCtrl>();
     }
 
     void Update()
     {
         GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
+        Vector2 origin = transform.position;
+
+        if(Vector2.Distance(origin, player.transform.position) > lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == true)
+        {
+            DisableCamera();
+        }
+        else if (Vector2.Distance(origin, player.transform.position) < lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == false)
+        {
+            EnableCamera();
+        }
     }
 
     void OnDisable()

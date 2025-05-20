@@ -1,15 +1,22 @@
 using UnityEngine;
 using System.Linq;
+using System.Collections.Generic;
+using System.Collections;
 
 [RequireComponent(typeof(Collider2D), typeof(Rigidbody2D))]
-public abstract class Entity : MonoBehaviour, IDamagable
+public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
 {
     public Rigidbody2D rb2d { get; private set; }
     [HideInInspector] public Sprite sprite;
+    public Stat stat;
     protected Collider2D col;
-    protected Stat stat;
     [SerializeField] public float HP { get; protected set; }
 
+    public Coroutine AttackTimerCor { get; protected set; } = null;
+
+    public WeaponCtrl WeaponController { get; protected set; }
+
+    [SerializeField] public LayerMask attackLayer;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -52,6 +59,7 @@ public abstract class Entity : MonoBehaviour, IDamagable
     protected abstract void OnEntityDied(Entity caster);
     protected abstract void OnTakeDamage(Entity caster, float amount);
     protected abstract void OnEntityHeal(Entity caster, float amount);
+    protected abstract void OnEntityAttack(Entity caster, float amount);
 
     public (bool isIn, Collider2D? col)IsInShadow()
     {
@@ -61,5 +69,45 @@ public abstract class Entity : MonoBehaviour, IDamagable
                 return (true, shadow.col);
         }
         return (false, null);
+    }
+
+    public List<GameObject>? FieldOfView(float range, float angle, int layer)
+    {
+        Vector2 origin = transform.position;
+        List<GameObject> result = new List<GameObject>();
+        Collider2D[] targets = Physics2D.OverlapCircleAll(origin, range, layer);
+        if (targets.Length <= 0)
+            return null;
+        else
+        {
+            foreach (var target in targets)
+            {
+                Vector2 targetPos = target.transform.position;
+                Vector2 dir = (targetPos - origin).normalized;
+                float theta = Mathf.Acos(Vector3.Dot(transform.right, dir)) * Mathf.Rad2Deg;
+
+                if (Physics2D.Raycast(origin, dir, range, layer).collider == target && theta <= angle)
+                {
+                    result.Add(target.gameObject);
+                }
+            }
+        }
+        return result;
+    }
+
+    public void Attack(Entity caster, float amount)
+    {
+        if(AttackTimerCor == null && WeaponController.nowWeapon != null)
+        {
+            AttackTimerCor = StartCoroutine(AttackTimer(stat.Get(StatType.ATTACK_SPEED)));
+            WeaponController.UsingWeapon();
+            OnEntityAttack(this, stat.Get(StatType.DAMAGE));
+        }
+    }
+
+    private IEnumerator AttackTimer(float attackSpeed)
+    {
+        yield return new WaitForSeconds(1f / attackSpeed);
+        AttackTimerCor = null;
     }
 }
