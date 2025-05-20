@@ -7,11 +7,9 @@ using System;
 
 public class PlayerCtrl : Entity, ICameraLookable
 {
-
     #region Light Attribute
-    public GameObject light;
+    public GameObject lightPrefab;
     [Min(1)] public float throwPower;
-    public LayerMask attackLayer;
     private Coroutine throwCor;
     #endregion
 
@@ -22,6 +20,8 @@ public class PlayerCtrl : Entity, ICameraLookable
     private TrailRenderer tR;
     private Coroutine dashCor;
     #endregion
+
+
 
     void OnEnable()
     {
@@ -34,9 +34,9 @@ public class PlayerCtrl : Entity, ICameraLookable
         base.Start();
         tR = gameObject.GetComponent<TrailRenderer>();
         tR.enabled = false;
-
+        WeaponController = new WeaponCtrl(this, new Dagger());
         #region Debug...
-        stat.SetDefault(StatType.MOVE_SPEED, 3);
+        stat.SetDefault(StatType.MOVE_SPEED, 5);
         #endregion
 
     }
@@ -45,6 +45,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     void Update()
     {
         Move();
+        KeyInput();
     }
 
     void OnDisable()
@@ -52,10 +53,8 @@ public class PlayerCtrl : Entity, ICameraLookable
         DisableCamera();
     }
 
-    private void Move()
+    private void KeyInput()
     {
-        var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")) * stat.Get(StatType.MOVE_SPEED) * Time.deltaTime;
-        rb2d.MovePosition((Vector2)transform.position + inputVector);
         if (Input.GetKeyDown(KeyCode.Q))
         {
             ShadowDash(0.2f, dashDistance, dashTime);
@@ -64,24 +63,27 @@ public class PlayerCtrl : Entity, ICameraLookable
         {
             ThrowLight(throwPower);
         }
+        if (Input.GetMouseButton(0))
+        {
+            Attack(this, stat.Get(StatType.DAMAGE));
+        }
+    }
+
+
+    private void Move()
+    {
+        var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")).normalized;
+        rb2d.MovePosition((Vector2)transform.position + (inputVector * stat.Get(StatType.MOVE_SPEED) * Time.deltaTime));
+        var dir = (Vector2)(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position).normalized;
+        var targetRotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, targetRotation);
+
     }
 
     private void ThrowLight(float tP)
     {
         if (throwCor == null)
             throwCor = StartCoroutine(ThrowLightCor(tP));
-    }
-
-    protected override void OnEntityDied(Entity caster)
-    {
-    }
-
-    protected override void OnEntityHeal(Entity caster, float amount)
-    {
-    }
-
-    protected override void OnTakeDamage(Entity caster, float amount)
-    {
     }
 
     private void ShadowDash(float castingTime, float dashDist, float dashTime)
@@ -176,8 +178,9 @@ public class PlayerCtrl : Entity, ICameraLookable
 
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
-        GameObject obj = Instantiate(light, transform.position, Quaternion.identity);
-        obj.GetComponent<Rigidbody2D>().AddForce(dir * tP, ForceMode2D.Impulse);
+        Rigidbody2D obj = Instantiate(lightPrefab, transform.position, Quaternion.identity).GetComponent<Rigidbody2D>();
+        obj.linearDamping = 1f;
+        obj.AddForce(dir * tP, ForceMode2D.Impulse);
         throwCor = null;
     }
 
@@ -189,6 +192,21 @@ public class PlayerCtrl : Entity, ICameraLookable
     public void DisableCamera()
     {
         MainCineCam.Instance.targetTrList.Remove(transform);
+    }
 
+    protected override void OnEntityDied(Entity caster)
+    {
+    }
+
+    protected override void OnEntityHeal(Entity caster, float amount)
+    {
+    }
+
+    protected override void OnTakeDamage(Entity caster, float amount)
+    {
+    }
+
+    protected override void OnEntityAttack(Entity caster, float amount)
+    {
     }
 }

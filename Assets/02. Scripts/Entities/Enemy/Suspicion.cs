@@ -25,10 +25,11 @@ public class Suspicion : IState<Enemy>
 
     public void Update(Enemy caster)
     {
-        if(caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer) == true)
+        if(caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer) == true)      // If Player is in sight
         {
-            Vector2 playerPos = caster.FieldOfView(caster.recogDist, caster.sightAngle, caster.recogLayer).Find(obj => obj.TryGetComponent(out PlayerCtrl player)).transform.position;
             detectTime += Time.deltaTime;
+            Vector2 playerPos = caster.FieldOfView(caster.recogDist, caster.sightAngle, caster.recogLayer).Find(obj => obj.TryGetComponent(out PlayerCtrl player)).transform.position;
+            Vector2 targetPos = playerPos - (((Vector2)caster.transform.position - playerPos).normalized * -3);
             caster.navMesh.destination = playerPos;
             caster.targetPos = playerPos;
             if (detectTime >= caster.engageTime)
@@ -37,7 +38,7 @@ public class Suspicion : IState<Enemy>
                 Debug.LogWarning("Has engaged");
             }
         }
-        else
+        else            // or not
         {
             if (detectTime > -caster.searchTime)
             {
