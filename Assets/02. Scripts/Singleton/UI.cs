@@ -8,10 +8,6 @@ public class UI : Singleton<UI>
     [SerializeField] private Image fadeImage;
     private Coroutine fadeCor;
 
-    void Start()
-    {
-    }
-
     public void Fade(bool fadeOut, Color color, float fadeTime, float maxFadeAlpha)
     {
         if (fadeCor != null)

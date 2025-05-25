@@ -25,6 +25,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     private LineRenderer dashTrajectory;
     #endregion
 
+    public float diveTime;
 
 
     void OnEnable()
