@@ -25,6 +25,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     private LineRenderer dashTrajectory;
     #endregion
 
+    public float diveTime;
 
 
     void OnEnable()
@@ -144,7 +145,7 @@ public class PlayerCtrl : Entity, ICameraLookable
             {
                 dashTrajectory.enabled = false;
                 RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
-                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Mathf.Infinity, 
+                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Vector2.Distance(origin, targetPos), 
                     1 << LayerMask.NameToLayer("Shadow"));
 
                 if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow"))
@@ -195,12 +196,6 @@ public class PlayerCtrl : Entity, ICameraLookable
         while (!Input.GetMouseButtonUp(0))
         {
             yield return null;
-            //if ()
-            //    break;
-            //else if (Input.anyKey)
-            //    yield break;
-
-
         }
 
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -236,4 +231,6 @@ public class PlayerCtrl : Entity, ICameraLookable
     protected override void OnEntityAttack(Entity caster, float amount)
     {
     }
+
+
 }
