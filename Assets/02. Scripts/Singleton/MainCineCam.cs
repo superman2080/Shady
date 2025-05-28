@@ -17,6 +17,8 @@ public class MainCineCam: Singleton<MainCineCam>
     private Coroutine vignetteCor;
     private Vignette vig;
 
+    private ShadowsMidtonesHighlights sMH;
+
 
     void Start()
     {
@@ -27,7 +29,7 @@ public class MainCineCam: Singleton<MainCineCam>
         target = transform.Find("Target");
         stateMachine = new StateMachine<MainCineCam>(this, new CSingleLookAt());
 
-        FadeVignette(Color.black, true, 1f, 0.2f, 0.4f);
+        sMH = GetVolumeComponent<ShadowsMidtonesHighlights>();
     }
 
     void Update()
@@ -51,6 +53,18 @@ public class MainCineCam: Singleton<MainCineCam>
         if (vignetteCor != null)
             StopCoroutine(vignetteCor);
         StartCoroutine(VignetteCoroutine(color, fadeIn, time, minVal, maxVal));
+    }
+
+    public void SetShadowTone(Color col, float val, float endVal)
+    {
+        if (volume.profile.TryGet<ShadowsMidtonesHighlights>(out var colorGrading))
+        {
+
+            colorGrading.shadows.overrideState = true;
+            colorGrading.shadowsEnd = new MinFloatParameter(endVal, 0);
+            Vector4 color = new Vector4(col.r, col.g, col.b, 0) * Mathf.Lerp(0f, endVal, val);
+            colorGrading.shadows.value = color;
+        }
     }
 
     public T GetVolumeComponent<T>() where T : VolumeComponent

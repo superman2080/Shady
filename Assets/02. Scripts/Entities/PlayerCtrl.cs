@@ -17,15 +17,24 @@ public class PlayerCtrl : Entity, ICameraLookable
 
     [Header("Related to shadow")]
     #region Shadow Attribute
-    public float dashDistance;
-    public float dashTime;
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
     private TrailRenderer dashTrail;
     private Coroutine dashCor;
     private LineRenderer dashTrajectory;
     #endregion
 
+    #region Shadow Dash Attribute
+    [Header("Related to shadow dash")]
+    public float dashDistance;
+    public float maxDashStamina;
+    public float dashStamina;
+    public float dashCost;
+    public float delayRecoverTime;
+    public float recoverStamina;
+    public float dashTime;
+    public float maxDiveTime;
     public float diveTime;
+    #endregion
 
 
     void OnEnable()
@@ -43,6 +52,10 @@ public class PlayerCtrl : Entity, ICameraLookable
 
         dashTrajectory = gameObject.GetComponent<LineRenderer>();
         dashTrajectory.enabled = false;
+
+        dashStamina = maxDashStamina;
+        diveTime = maxDiveTime;
+        StartCoroutine(StaminaCor());
         #region Debug...
         stat.SetDefault(StatType.MOVE_SPEED, 5);
         #endregion
@@ -54,6 +67,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     {
         Move();
         KeyInput();
+        DiveShadow();
     }
 
     void OnDisable()
@@ -86,7 +100,6 @@ public class PlayerCtrl : Entity, ICameraLookable
         }
     }
 
-
     private void Move()
     {
         var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")).normalized;
@@ -97,6 +110,35 @@ public class PlayerCtrl : Entity, ICameraLookable
 
     }
 
+    private void DiveShadow()
+    {
+        diveTime = IsInShadow().isIn ? Mathf.Clamp(diveTime - Time.deltaTime, 0, maxDiveTime) : Mathf.Clamp(diveTime + Time.deltaTime, 0, maxDiveTime);
+
+        if(diveTime > 0 && IsInShadow().isIn)
+        {
+            IsInShadow().col.isTrigger = true;
+        }
+        if(diveTime <= 0 && IsInShadow().isIn)
+        {
+            IsInShadow().col.isTrigger = false;
+        }
+    }
+
+    private IEnumerator StaminaCor()
+    {
+        float lateStamina = dashStamina;
+        while (true)
+        {
+            if (lateStamina != dashStamina)
+            {
+                yield return new WaitForSeconds(delayRecoverTime);
+            }
+            dashStamina = Mathf.Clamp(dashStamina + recoverStamina * Time.deltaTime, 0, maxDashStamina);
+            lateStamina = dashStamina;
+            yield return null;
+        }
+    }
+
     private void ThrowLight(float tP)
     {
         if (throwCor == null)
@@ -105,7 +147,7 @@ public class PlayerCtrl : Entity, ICameraLookable
 
     private void ShadowDash(float castingTime, float dashDist, float dashTime)
     {
-        if (dashCor == null)
+        if (dashCor == null && dashStamina > 0)
             dashCor = StartCoroutine(ShadowDashCor(castingTime, dashDist, dashTime));
     }
 
@@ -114,7 +156,7 @@ public class PlayerCtrl : Entity, ICameraLookable
         // Start casting
 
 
-        UI.Instance.Fade(false, Color.black, castingTime, 0.5f);
+        UI.Instance.Fade(false, Color.black, castingTime, 0.4f);
         for (float eT = 0; eT <= castingTime; eT += Time.deltaTime) 
         {
             Time.timeScale = Mathf.Lerp(1f, 0.1f, eT / castingTime);
@@ -144,47 +186,36 @@ public class PlayerCtrl : Entity, ICameraLookable
             if (Input.GetMouseButtonUp(0))
             {
                 dashTrajectory.enabled = false;
+                moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
-                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Vector2.Distance(origin, targetPos), 
+                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Vector2.Distance(origin, moveTo),
                     1 << LayerMask.NameToLayer("Shadow"));
 
-                if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow"))
+                if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow") && IsInShadow().isIn)
                 {
-                    moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                     RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, attackLayer);
                     targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
-                    break;
+                    foreach (var target in targets)
+                    {
+                        if (!target.Equals(this))
+                        {
+                            target.TakeDamage(this, target.HP);
+                            Debug.Log(target.GetType().Name);
+                        }
+                    }
                 }
-                else
-                {
-                    Time.timeScale = 1;
-                    UI.Instance.Fade(true, Color.black, 0.1f, 0.5f);
-                    dashTrail.enabled = false;
-                    dashCor = null;
-                    Debug.Log("Failed casting");
-                    yield break;
-                }
+                break;
             }
         }
-
-
-
         Time.timeScale = 1;
-        UI.Instance.Fade(true, Color.black, 0.1f, 0.5f);
+
+        UI.Instance.Fade(true, Color.black, castingTime, 0.4f);
+        dashStamina -= dashCost;
 
         for (float eT = 0; eT <= dashTime; eT += Time.deltaTime) 
         {
             transform.position = Vector2.Lerp(origin, targetPos, dashSpeed.Evaluate(eT / dashTime));
             yield return null;
-        }
-
-        foreach (var target in targets)
-        {
-            if (!target.Equals(this))
-            {
-                target.TakeDamage(this, stat.Get(StatType.DAMAGE));
-                Debug.Log(target.GetType().Name);
-            }
         }
 
         dashTrail.enabled = false;

@@ -1,4 +1,3 @@
-#nullable enable
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
