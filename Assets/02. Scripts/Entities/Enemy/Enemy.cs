@@ -4,9 +4,10 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
 
-public class Enemy : Entity
+public abstract class Enemy : Entity
 {
     [HideInInspector] public StateMachine<Enemy>? stateMachine;
+    [HideInInspector] public WeaponCtrl weaponCtrl;
     [HideInInspector] public NavMeshAgent? navMesh;
     [HideInInspector] public Vector2 targetPos;
 
@@ -31,11 +32,6 @@ public class Enemy : Entity
         navMesh = gameObject.GetComponent<NavMeshAgent>();
         navMesh.updateRotation = false;
         navMesh.updateUpAxis = false;
-
-        stateMachine = new StateMachine<Enemy>(this, new Patrol());
-        stat.SetDefault(StatType.MOVE_SPEED, 3);
-        navMesh.speed = stat.Get(StatType.MOVE_SPEED);
-        navMesh.angularSpeed = rotationSpeed;
     }
 
     protected virtual void Update()
@@ -69,23 +65,6 @@ public class Enemy : Entity
 
         Gizmos.color = Color.green;
         Gizmos.DrawRay(origin, transform.right * recogDist);
-    }
-
-    protected override void OnEntityDied(Entity caster)
-    {
-    }
-
-    protected override void OnTakeDamage(Entity caster, float amount)
-    {
-        Debug.Log($"{caster.name}, {HP}");
-    }
-
-    protected override void OnEntityHeal(Entity caster, float amount)
-    {
-    }
-
-    protected override void OnEntityAttack(Entity caster, float amount)
-    {
     }
 
     public bool HasReachedDestination(Vector2 pos)
@@ -172,7 +151,7 @@ public class Enemy : Entity
         {
             foreach (var enemy in enemies)
             {
-                enemy.stateMachine?.ChangeState(new Engagement());
+                enemy.stateMachine?.ChangeState(new MeleeEngagement());
             }
         }
     }

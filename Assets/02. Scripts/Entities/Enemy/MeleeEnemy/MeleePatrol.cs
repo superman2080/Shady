@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Patrol : IState<Enemy>
+public class MeleePatrol : IState<Enemy>
 {
     private Vector2[] patrolPos = new Vector2[3];
     private int idx = 0;
@@ -28,7 +28,7 @@ public class Patrol : IState<Enemy>
         {
             Vector2 targetPos = caster.FieldOfView(caster.recogDist, caster.sightAngle, caster.recogLayer).Find(obj => obj.TryGetComponent(out PlayerCtrl player)).transform.position;
             caster.targetPos = targetPos;
-            caster.stateMachine.ChangeState(new Suspicion());
+            caster.stateMachine.ChangeState(new MeleeSuspicion());
         }    
     }
 

@@ -20,9 +20,10 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
     private PlayerCtrl player;
 
-    private Collider2D[] curObstacles;
 
+    private Collider2D[] curObstacles;
     private Collider2D[] lateObstacles;
+    private List<List<Vector3>> shadowVertices = new List<List<Vector3>>();
     private Vector3 latePos;
 
 
@@ -56,6 +57,12 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         light.intensity = lightScale;
     }
 
+    void LateUpdate()
+    {
+        lateObstacles = curObstacles;
+        latePos = transform.position;
+    }
+
     void OnDisable()
     {
         foreach (var shadow in shadowList)
@@ -71,39 +78,57 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
 
     private void GenerateShadow(float lS, float mS, int layer)
     {
-        obstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
+        curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
-        // Object Pool (Generating shadow when collided obstacles)
-        for (int i = 0; i < obstacles.Length; i++)
+
+        if (transform.position.Equals(latePos) 
+            && curObstacles.Length == lateObstacles.Length 
+            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y)))
         {
-            Shadow? shadow = null;
-            if (shadowList.Count < obstacles.Length)
+            for (int i = 0; i < curObstacles.Length; i++)
             {
-                shadow = ShadowPool.Instance.InstantiateShadow(this);
-                shadowList.Add(shadow);
+                shadowList[i].GenerateShadow(shadowVertices[i]);
             }
-            else
-            {
-                shadow = shadowList[i];
-            }
-            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], lS, mS);
-            List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, mS);
-            shadow.GenerateShadow(shadowVertices);
-        }
-        //
 
-        // Delete when shadows outnumber obstacles
-        if (shadowList.Count > obstacles.Length)
+
+        }
+        else
         {
-            int removeCount = shadowList.Count - obstacles.Length; // 삭제할 개수 저장
-
-            for (int i = shadowList.Count - 1; i >= Mathf.Max(0, shadowList.Count - removeCount); i--)
+            shadowVertices.Clear();
+            // Object Pool (Generating shadow when collided obstacles)
+            for (int i = 0; i < curObstacles.Length; i++)
             {
-                shadowList[i].gameObject.SetActive(false);
-                shadowList.RemoveAt(i);
+                Shadow? shadow = null;
+                if (shadowList.Count < curObstacles.Length)
+                {
+                    shadow = ShadowPool.Instance.InstantiateShadow(this);
+                    shadowList.Add(shadow);
+                }
+                else
+                {
+                    shadow = shadowList[i];
+                }
+                List<Vector3>? objectVertices = GetColliderVertices(curObstacles[i], lS, mS);
+                shadowVertices.Add(GetShadowVertices(curObstacles[i].gameObject, objectVertices, lS, mS));
+                shadow.GenerateShadow(shadowVertices[i]);
             }
+            //
+
+            // Delete when shadows outnumber obstacles
+            if (shadowList.Count > curObstacles.Length)
+            {
+                int removeCount = shadowList.Count - curObstacles.Length; // 삭제할 개수 저장
+
+                for (int i = shadowList.Count - 1; i >= Mathf.Max(0, shadowList.Count - removeCount); i--)
+                {
+                    shadowList[i].gameObject.SetActive(false);
+                    shadowList.RemoveAt(i);
+                }
+            }
+            shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
+
+
         }
-        shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
     }
 
     private List<Vector3> GetColliderVertices(Collider2D collider, float shadowDist, float minShadowDist)

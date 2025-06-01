@@ -6,7 +6,7 @@ using UnityEngine;
  * then look at a specific point in the radius, 
  * and then return to the combat state if you see the player for a certain period of time or if you can't see it.
 */
-public class Suspicion : IState<Enemy>
+public class MeleeSuspicion : IState<Enemy>
 {
     private Vector2 originPos;
     private Vector2 suspicionPos;
@@ -34,7 +34,7 @@ public class Suspicion : IState<Enemy>
             caster.targetPos = playerPos;
             if (detectTime >= caster.engageTime)
             {
-                caster.stateMachine.ChangeState(new Engagement());
+                caster.stateMachine.ChangeState(new MeleeEngagement());
                 Debug.LogWarning("Has engaged");
             }
         }
@@ -51,7 +51,7 @@ public class Suspicion : IState<Enemy>
                 caster.targetPos = originPos;
                 caster.navMesh.destination = originPos;
                 if (caster.HasReachedDestination(originPos))
-                    caster.stateMachine.ChangeState(new Patrol());
+                    caster.stateMachine.ChangeState(new MeleePatrol());
             }
 
             if (caster.HasReachedDestination(searchPos[idx]))

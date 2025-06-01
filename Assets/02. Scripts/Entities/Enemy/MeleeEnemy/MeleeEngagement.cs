@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Engagement : IState<Enemy>
+public class MeleeEngagement : IState<Enemy>
 {
     
     public void Start(Enemy caster)
