@@ -1,23 +1,47 @@
 ﻿#nullable enable
+#pragma warning disable CS8618
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.UI;
+using UnityEngine.Rendering.Universal;
 
 public class ShadowCaster : MonoBehaviour, ICameraLookable
 {
+    [Header("Related to UI")]
+    [Range(1f, 100f)] public float maintainTime;
+    public Slider sliderUI;
+
+    [Header("Light Attribute")]
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
     public float minShadowScale = 5f;
+    private Light2D light;
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
     private PlayerCtrl player;
+
+
+    private Collider2D[] curObstacles;
+    private Collider2D[] lateObstacles;
+    private List<List<Vector3>> shadowVertices = new List<List<Vector3>>();
+    private Vector3 latePos;
+
+
     void OnEnable()
     {
         EnableCamera();
         player = FindAnyObjectByType<PlayerCtrl>();
+        sliderUI.value = 1;
+        StartCoroutine(DecreaseStamina(maintainTime));
+    }
+
+    void Start()
+    {
+        light = gameObject.GetComponent<Light2D>();
     }
 
     void Update()
     {
-        GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
         Vector2 origin = transform.position;
 
         if(Vector2.Distance(origin, player.transform.position) > lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == true)
@@ -28,6 +52,15 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         {
             EnableCamera();
         }
+
+        GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
+        light.intensity = lightScale;
+    }
+
+    void LateUpdate()
+    {
+        lateObstacles = curObstacles;
+        latePos = transform.position;
     }
 
     void OnDisable()
@@ -35,7 +68,9 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         foreach (var shadow in shadowList)
         {
             if (shadow != null)
+            {
                 shadow.gameObject.SetActive(false);
+            }
         }
         shadowList.Clear();
         DisableCamera();
@@ -43,39 +78,57 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
 
     private void GenerateShadow(float lS, float mS, int layer)
     {
-        Collider2D[] obstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
+        curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
-        // Object Pool (Generating shadow when collided obstacles)
-        for (int i = 0; i < obstacles.Length; i++)
+
+        if (transform.position.Equals(latePos) 
+            && curObstacles.Length == lateObstacles.Length 
+            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y)))
         {
-            Shadow? shadow = null;
-            if (shadowList.Count < obstacles.Length)
+            for (int i = 0; i < curObstacles.Length; i++)
             {
-                shadow = ShadowPool.Instance.InstantiateShadow(this);
-                shadowList.Add(shadow);
+                shadowList[i].GenerateShadow(shadowVertices[i]);
             }
-            else
-            {
-                shadow = shadowList[i];
-            }
-            List<Vector3>? objectVertices = GetColliderVertices(obstacles[i], lS, mS);
-            List<Vector3>? shadowVertices = GetShadowVertices(obstacles[i].gameObject, objectVertices, lS, mS);
-            shadow.GenerateShadow(shadowVertices);
-        }
-        //
 
-        // Delete when shadows outnumber obstacles
-        if (shadowList.Count > obstacles.Length)
+
+        }
+        else
         {
-            int removeCount = shadowList.Count - obstacles.Length; // 삭제할 개수 저장
-
-            for (int i = shadowList.Count - 1; i >= Mathf.Max(0, shadowList.Count - removeCount); i--)
+            shadowVertices.Clear();
+            // Object Pool (Generating shadow when collided obstacles)
+            for (int i = 0; i < curObstacles.Length; i++)
             {
-                shadowList[i].gameObject.SetActive(false);
-                shadowList.RemoveAt(i);
+                Shadow? shadow = null;
+                if (shadowList.Count < curObstacles.Length)
+                {
+                    shadow = ShadowPool.Instance.InstantiateShadow(this);
+                    shadowList.Add(shadow);
+                }
+                else
+                {
+                    shadow = shadowList[i];
+                }
+                List<Vector3>? objectVertices = GetColliderVertices(curObstacles[i], lS, mS);
+                shadowVertices.Add(GetShadowVertices(curObstacles[i].gameObject, objectVertices, lS, mS));
+                shadow.GenerateShadow(shadowVertices[i]);
             }
+            //
+
+            // Delete when shadows outnumber obstacles
+            if (shadowList.Count > curObstacles.Length)
+            {
+                int removeCount = shadowList.Count - curObstacles.Length; // 삭제할 개수 저장
+
+                for (int i = shadowList.Count - 1; i >= Mathf.Max(0, shadowList.Count - removeCount); i--)
+                {
+                    shadowList[i].gameObject.SetActive(false);
+                    shadowList.RemoveAt(i);
+                }
+            }
+            shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
+
+
         }
-        shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
     }
 
     private List<Vector3> GetColliderVertices(Collider2D collider, float shadowDist, float minShadowDist)
@@ -113,8 +166,8 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     {
         obs.layer = LayerMask.NameToLayer("ScanTile");
 
-        List<Vector3> innerPoints = new ();
-        List<Vector3> outerPoints = new ();
+        List<Vector3> innerPoints = new List<Vector3>();
+        List<Vector3> outerPoints = new List<Vector3>();
 
 
         Vector3 origin = transform.position;
@@ -228,5 +281,17 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     public void DisableCamera()
     {
         MainCineCam.Instance.targetTrList.Remove(transform);
+    }
+
+
+    private IEnumerator DecreaseStamina(float mT)
+    {
+        for (float eT = 0; eT < mT; eT += Time.deltaTime) 
+        {
+            sliderUI.value = 1f - eT / mT;
+            yield return null;
+        }
+        sliderUI.value = 0;
+        Destroy(gameObject);
     }
 }
