@@ -1,9 +1,11 @@
+using System.Collections;
 using UnityEngine;
 
-public class StateMachine<T>
+public class StateMachine<T> where T: MonoBehaviour
 {
     private IState<T> state;
     private T caster;
+    private Coroutine delayCor;
 
 
     public StateMachine(T caster, IState<T> state)
@@ -13,7 +15,14 @@ public class StateMachine<T>
         this.state.Start(caster);
     }
 
-    public void ChangeState(IState<T> newState)
+    public void ChangeState(IState<T> newState, float delayTime)
+    {
+        if (state == newState || delayCor != null) return;
+
+        delayCor = caster.StartCoroutine(DelayChangeStateCor(delayTime, newState));
+    }
+
+    public void ChangeStateImmediately(IState<T> newState)
     {
         if (state == newState) return;
 
@@ -24,6 +33,19 @@ public class StateMachine<T>
 
     public void Update()
     {
-        state.Update(caster);
+        if (state != null)
+            state.Update(caster);
+    }
+
+    private IEnumerator DelayChangeStateCor(float sec, IState<T> newState)
+    {
+        Debug.Log(state.GetType().Name);
+        state.Finish(caster);
+        state = null;
+        yield return new WaitForSeconds(sec);
+        state = newState;
+        state.Start(caster);
+        Debug.Log(state.GetType().Name);
+        delayCor = null;
     }
 }

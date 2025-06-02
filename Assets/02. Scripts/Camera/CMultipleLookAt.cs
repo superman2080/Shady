@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class CMultipleLookAt : IState<MainCineCam>
 {
+
     public void Start(MainCineCam caster)
     {
     }
@@ -14,7 +15,7 @@ public class CMultipleLookAt : IState<MainCineCam>
 
         if(tL.Count <= 1)
         {
-            caster.stateMachine.ChangeState(new CSingleLookAt());
+            caster.stateMachine.ChangeStateImmediately(new CSingleLookAt());
         }
         else
         {

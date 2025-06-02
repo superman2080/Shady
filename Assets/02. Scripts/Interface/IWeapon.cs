@@ -1,5 +1,10 @@
 using UnityEngine;
 
+public class WeaponStat
+{
+
+}
+
 public interface IWeapon
 {
     public LayerMask AttackLayer { get; }

@@ -1,4 +1,5 @@
 #nullable enable
+#pragma warning disable CS8602
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -7,7 +8,7 @@ using UnityEngine.AI;
 public abstract class Enemy : Entity
 {
     [HideInInspector] public StateMachine<Enemy>? stateMachine;
-    [HideInInspector] public WeaponCtrl weaponCtrl;
+    [HideInInspector] public WeaponCtrl? weaponCtrl;
     [HideInInspector] public NavMeshAgent? navMesh;
     [HideInInspector] public Vector2 targetPos;
 
@@ -22,9 +23,7 @@ public abstract class Enemy : Entity
     public float recogDist;
     [Range(30, 90)] public float sightAngle;
     public LayerMask recogLayer;
-
-
-
+    public Transform? playerTr { get; private set; }
 
     protected override void Start()
     {
@@ -32,6 +31,7 @@ public abstract class Enemy : Entity
         navMesh = gameObject.GetComponent<NavMeshAgent>();
         navMesh.updateRotation = false;
         navMesh.updateUpAxis = false;
+        playerTr = FindAnyObjectByType<PlayerCtrl>().transform;
     }
 
     protected virtual void Update()
@@ -69,9 +69,7 @@ public abstract class Enemy : Entity
 
     public bool HasReachedDestination(Vector2 pos)
     {
-#pragma warning disable CS8602
         if (!navMesh.pathPending && navMesh.remainingDistance <= navMesh.stoppingDistance && (!navMesh.hasPath || navMesh.velocity.sqrMagnitude == 0f))
-#pragma warning restore CS8602 
             return true;
         else
             return false;
@@ -151,7 +149,6 @@ public abstract class Enemy : Entity
         {
             foreach (var enemy in enemies)
             {
-                enemy.stateMachine?.ChangeState(new MeleeEngagement());
             }
         }
     }
@@ -167,5 +164,11 @@ public abstract class Enemy : Entity
         }
     }
 
+    public Collider2D GetNearestObs()
+    {
+        Vector2 origin = transform.position;
+        return Physics2D.OverlapCircleAll(origin, searchRange, 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile")).
+            OrderBy(o => Vector2.SqrMagnitude((Vector2)o.transform.position - origin)).First();
+    }
 
 }

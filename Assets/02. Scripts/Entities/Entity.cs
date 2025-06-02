@@ -1,3 +1,5 @@
+#nullable enable
+#pragma warning disable CS8618
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
@@ -7,7 +9,7 @@ using System.Collections;
 public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
 {
     public Rigidbody2D rb2d { get; private set; }
-    [HideInInspector] public Sprite sprite;
+    [HideInInspector] public SpriteRenderer spriteRenderer;
     public Stat stat;
     protected Collider2D col;
     [SerializeField] public float HP { get; protected set; }
@@ -24,7 +26,7 @@ public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
     {
         col = gameObject.GetComponent<Collider2D>();
         rb2d = gameObject.GetComponent<Rigidbody2D>();
-        sprite = gameObject.GetComponent<Sprite>();
+        spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
         stat = new Stat();
         stat.InitStat();
         HP = stat.Get(StatType.MAX_HP);

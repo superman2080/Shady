@@ -16,7 +16,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     [Header("Light Attribute")]
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
     public float minShadowScale = 5f;
-    private Light2D light;
+    private Light2D light2D;
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
     private PlayerCtrl player;
 
@@ -37,7 +37,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
 
     void Start()
     {
-        light = gameObject.GetComponent<Light2D>();
+        light2D = gameObject.GetComponent<Light2D>();
     }
 
     void Update()
@@ -54,7 +54,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         }
 
         GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
-        light.intensity = lightScale;
+        light2D.intensity = lightScale;
     }
 
     void LateUpdate()

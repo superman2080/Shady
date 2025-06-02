@@ -25,7 +25,6 @@ public class MeleeEnemy : Enemy
 
     protected override void OnTakeDamage(Entity caster, float amount)
     {
-        Debug.Log($"{caster.name}, {HP}");
     }
 
     protected override void OnEntityHeal(Entity caster, float amount)
