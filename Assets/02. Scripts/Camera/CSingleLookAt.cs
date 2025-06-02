@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class CSingleLookAt : IState<MainCineCam>
 {
+    public float TransitionTime { get; set; }
+
     public void Start(MainCineCam caster)
     {
         caster.SetOrthoSize(caster.minOrthoSize);
@@ -19,7 +21,7 @@ public class CSingleLookAt : IState<MainCineCam>
         }
         else
         {
-            caster.stateMachine.ChangeState(new CMultipleLookAt());
+            caster.stateMachine.ChangeStateImmediately(new CMultipleLookAt());
         }
     }
 

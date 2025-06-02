@@ -65,9 +65,13 @@ public class PlayerCtrl : Entity, ICameraLookable
     // Update is called once per frame
     void Update()
     {
-        Move();
-        KeyInput();
         DiveShadow();
+    }
+
+    void FixedUpdate()
+    {
+        KeyInput();
+        Move();
     }
 
     void OnDisable()
@@ -103,7 +107,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     private void Move()
     {
         var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")).normalized;
-        rb2d.MovePosition((Vector2)transform.position + (inputVector * stat.Get(StatType.MOVE_SPEED) * Time.deltaTime));
+        rb2d.MovePosition((Vector2)transform.position + (inputVector * stat.Get(StatType.MOVE_SPEED) * Time.fixedDeltaTime));
         var dir = (Vector2)(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position).normalized;
         var targetRotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, targetRotation);

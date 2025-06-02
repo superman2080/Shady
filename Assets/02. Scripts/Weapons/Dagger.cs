@@ -16,21 +16,18 @@ public class Dagger : IWeapon
 
     public void Using(Entity user)
     {
-        if (Input.GetMouseButtonDown(0))
+        List<GameObject> objs = user.FieldOfView(user.stat.Get(StatType.ATTACK_DISTANCE), 90, AttackLayer);
+        if (objs == null)
         {
-            List<GameObject> objs = user.FieldOfView(user.stat.Get(StatType.ATTACK_DISTANCE), 90, AttackLayer);
-            if( objs == null)
-            {
-                return;
-            }    
+            return;
+        }
 
-            foreach (var obj in objs)
+        foreach (var obj in objs)
+        {
+            if (obj.TryGetComponent(out Entity entity))
             {
-                if(obj.TryGetComponent(out Entity entity))
-                {
-                    entity.TakeDamage(user, user.stat.Get(StatType.DAMAGE));
-                    Debug.LogWarning(entity.HP);
-                }
+                entity.TakeDamage(user, user.stat.Get(StatType.DAMAGE));
+                Debug.LogWarning(entity.HP);
             }
         }
     }

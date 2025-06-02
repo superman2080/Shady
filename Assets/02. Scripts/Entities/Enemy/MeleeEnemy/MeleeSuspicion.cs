@@ -14,6 +14,8 @@ public class MeleeSuspicion : IState<Enemy>
     private float detectTime = 0;
     private int idx = 0;
 
+    public float TransitionTime { get; set; }
+
     public void Start(Enemy caster)
     {
         Debug.LogWarning("Start Suspicion");
@@ -34,7 +36,7 @@ public class MeleeSuspicion : IState<Enemy>
             caster.targetPos = playerPos;
             if (detectTime >= caster.engageTime)
             {
-                caster.stateMachine.ChangeState(new MeleeEngagement());
+                caster.stateMachine.ChangeState(new MeleeBasicAttack(), 0.25f);
                 Debug.LogWarning("Has engaged");
             }
         }
@@ -51,7 +53,7 @@ public class MeleeSuspicion : IState<Enemy>
                 caster.targetPos = originPos;
                 caster.navMesh.destination = originPos;
                 if (caster.HasReachedDestination(originPos))
-                    caster.stateMachine.ChangeState(new MeleePatrol());
+                    caster.stateMachine.ChangeState(new MeleePatrol(), 0.5f);
             }
 
             if (caster.HasReachedDestination(searchPos[idx]))
