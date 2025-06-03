@@ -1,16 +1,13 @@
 using UnityEngine;
 
-public class WeaponStat
-{
-
-}
-
 public interface IWeapon
 {
     public LayerMask AttackLayer { get; }
 
-    public void InitWeapon(Entity user);
+    public WeaponStat weaponStat { get; }
 
-    public void Using(Entity user);
+    public void InitWeapon(IAttackable user);
+
+    public void Using(IAttackable user);
 
 }

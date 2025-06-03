@@ -5,7 +5,7 @@ using UnityEditor;
 using System.Linq;
 using System;
 
-public class PlayerCtrl : Entity, ICameraLookable
+public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 {
     [Header("Related to light")]
     #region Light Attribute
@@ -36,6 +36,15 @@ public class PlayerCtrl : Entity, ICameraLookable
     public float diveTime;
     #endregion
 
+    #region IAttackable
+    public Coroutine AttackTimerCor { get; protected set; } = null;
+
+    public WeaponCtrl WeaponController { get; protected set; }
+
+    public WeaponStat weaponStat { get => WeaponController.weaponStat;}
+
+    [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Enemy"); }
+    #endregion
 
     void OnEnable()
     {
@@ -46,18 +55,24 @@ public class PlayerCtrl : Entity, ICameraLookable
     protected override void Start()
     {
         base.Start();
+
+        WeaponController = new WeaponCtrl(this);
+        WeaponController.SetWeapon(new Dagger());
+
+        #region Dash
         dashTrail = gameObject.GetComponent<TrailRenderer>();
         dashTrail.enabled = false;
-        WeaponController = new WeaponCtrl(this, new Dagger());
 
         dashTrajectory = gameObject.GetComponent<LineRenderer>();
         dashTrajectory.enabled = false;
 
         dashStamina = maxDashStamina;
         diveTime = maxDiveTime;
+
         StartCoroutine(StaminaCor());
+        #endregion
         #region Debug...
-        stat.SetDefault(StatType.MOVE_SPEED, 5);
+        entityStat.SetDefault(EntityStatType.MOVE_SPEED, 5);
         #endregion
 
     }
@@ -81,7 +96,7 @@ public class PlayerCtrl : Entity, ICameraLookable
 
     private void KeyInput()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             ShadowDash(0.2f, dashDistance, dashTime);
         }
@@ -99,7 +114,7 @@ public class PlayerCtrl : Entity, ICameraLookable
             }
             else
             {
-                Attack(this, stat.Get(StatType.DAMAGE));
+                Attack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
             }
         }
     }
@@ -107,7 +122,7 @@ public class PlayerCtrl : Entity, ICameraLookable
     private void Move()
     {
         var inputVector = (Vector2.right * Input.GetAxisRaw("Horizontal") + Vector2.up * Input.GetAxisRaw("Vertical")).normalized;
-        rb2d.MovePosition((Vector2)transform.position + (inputVector * stat.Get(StatType.MOVE_SPEED) * Time.fixedDeltaTime));
+        rb2d.MovePosition((Vector2)transform.position + (inputVector * entityStat.Get(EntityStatType.MOVE_SPEED) * Time.fixedDeltaTime));
         var dir = (Vector2)(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position).normalized;
         var targetRotation = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, targetRotation);
@@ -197,7 +212,7 @@ public class PlayerCtrl : Entity, ICameraLookable
 
                 if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow") && IsInShadow().isIn)
                 {
-                    RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, attackLayer);
+                    RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, AttackLayer);
                     targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
                     foreach (var target in targets)
                     {
@@ -251,7 +266,7 @@ public class PlayerCtrl : Entity, ICameraLookable
         MainCineCam.Instance.targetTrList.Remove(transform);
     }
 
-    protected override void OnEntityDied(Entity caster)
+    protected override void OnEntityDied(IAttackable caster)
     {
     }
 
@@ -259,13 +274,27 @@ public class PlayerCtrl : Entity, ICameraLookable
     {
     }
 
-    protected override void OnTakeDamage(Entity caster, float amount)
+    protected override void OnTakeDamage(IAttackable caster, float amount)
     {
     }
 
-    protected override void OnEntityAttack(Entity caster, float amount)
+    public void OnEntityAttack(Entity caster, float amount)
     {
     }
 
+    public void Attack(Entity caster, float amount)
+    {
+        if (AttackTimerCor == null && WeaponController.nowWeapon != null)
+        {
+            WeaponController.UsingWeapon();
+            OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+            AttackTimerCor = StartCoroutine(AttackTimer(weaponStat.Get(WeaponStatType.ATTACK_SPEED)));
+        }
+    }
 
+    private IEnumerator AttackTimer(float attackSpeed)
+    {
+        yield return new WaitForSeconds(1f / attackSpeed);
+        AttackTimerCor = null;
+    }
 }

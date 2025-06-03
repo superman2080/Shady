@@ -6,28 +6,58 @@ public class Dagger : IWeapon
 {
     public LayerMask AttackLayer { get; private set; }
 
-    public void InitWeapon(Entity user)
+    public WeaponStat weaponStat { get; private set; } = new WeaponStat();
+
+    public void InitWeapon(IAttackable user)
     {
-        AttackLayer = user.attackLayer;
-        user.stat.SetDefault(StatType.ATTACK_SPEED, 2);
-        user.stat.SetDefault(StatType.ATTACK_DISTANCE, 1);
-        user.stat.SetDefault(StatType.DAMAGE, 50);
+        AttackLayer = user.AttackLayer;
+
+        user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_SPEED, 2);
+        user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_DISTANCE, 2);
+        user.WeaponController.weaponStat.SetDefault(WeaponStatType.DAMAGE, 50);
     }
-
-    public void Using(Entity user)
-    {
-        List<GameObject> objs = user.FieldOfView(user.stat.Get(StatType.ATTACK_DISTANCE), 90, AttackLayer);
-        if (objs == null)
+    /*
+             Collider2D[] targets = Physics2D.OverlapCircleAll(origin, range, layer);
+        if (targets.Length <= 0)
+            return null;
+        else
         {
-            return;
-        }
-
-        foreach (var obj in objs)
-        {
-            if (obj.TryGetComponent(out Entity entity))
+            foreach (var target in targets)
             {
-                entity.TakeDamage(user, user.stat.Get(StatType.DAMAGE));
-                Debug.LogWarning(entity.HP);
+                Vector2 targetPos = target.transform.position;
+                Vector2 dir = (targetPos - origin).normalized;
+                float theta = Mathf.Acos(Vector3.Dot(transform.right, dir)) * Mathf.Rad2Deg;
+
+                if (Physics2D.Raycast(origin, dir, range, layer).collider == target && theta <= angle)
+                {
+                    result.Add(target.gameObject);
+                }
+            }
+        }
+         */
+
+    public void Using(IAttackable user)
+    {
+        var tr = (user as MonoBehaviour).transform;
+        Vector2 origin = tr.position;
+        float range = user.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE);
+
+        Collider2D[] col = Physics2D.OverlapCircleAll(tr.position, range, AttackLayer);
+        if (col.Length <= 0)
+            return;
+        else
+        {
+            foreach (var obj in col)
+            {
+                Vector2 targetPos = obj.transform.position;
+                Vector2 dir = (targetPos - origin).normalized;
+                float theta = Mathf.Acos(Vector3.Dot(tr.right, dir)) * Mathf.Rad2Deg;
+
+                if (Physics2D.Raycast(origin, dir, range, AttackLayer).collider == obj && theta <= 90 && obj.TryGetComponent(out IDamagable entity))
+                {
+                    entity.TakeDamage(user, user.WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+                    Debug.LogWarning(entity.HP);
+                }
             }
         }
     }

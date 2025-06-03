@@ -6,20 +6,13 @@ using System.Collections.Generic;
 using System.Collections;
 
 [RequireComponent(typeof(Collider2D), typeof(Rigidbody2D))]
-public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
+public abstract class Entity : MonoBehaviour, IDamagable
 {
     public Rigidbody2D rb2d { get; private set; }
     [HideInInspector] public SpriteRenderer spriteRenderer;
-    public Stat stat;
+    public EntityStat entityStat;
     protected Collider2D col;
     [SerializeField] public float HP { get; protected set; }
-
-    public Coroutine AttackTimerCor { get; protected set; } = null;
-
-    public WeaponCtrl WeaponController { get; protected set; }
-
-    [SerializeField] public LayerMask attackLayer;
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected virtual void Start()
@@ -27,17 +20,17 @@ public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
         col = gameObject.GetComponent<Collider2D>();
         rb2d = gameObject.GetComponent<Rigidbody2D>();
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-        stat = new Stat();
-        stat.InitStat();
-        HP = stat.Get(StatType.MAX_HP);
+        entityStat = new EntityStat();
+        entityStat.InitStat();
+        HP = entityStat.Get(EntityStatType.MAX_HP);
     }
 
     protected virtual void LateUpdate()
     {
-        stat.Update();
+        entityStat.Update();
     }
 
-    public void TakeDamage(Entity caster, float amount)
+    public void TakeDamage(IAttackable caster, float amount)
     {
         if (amount < 0)
             return;
@@ -55,13 +48,12 @@ public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
         if (amount < 0)
             return;
         OnEntityHeal(caster, amount);
-        HP = Mathf.Clamp(HP + amount, 0, stat.Get(StatType.MAX_HP));
+        HP = Mathf.Clamp(HP + amount, 0, entityStat.Get(EntityStatType.MAX_HP));
     }
 
-    protected abstract void OnEntityDied(Entity caster);
-    protected abstract void OnTakeDamage(Entity caster, float amount);
+    protected abstract void OnEntityDied(IAttackable caster);
+    protected abstract void OnTakeDamage(IAttackable caster, float amount);
     protected abstract void OnEntityHeal(Entity caster, float amount);
-    protected abstract void OnEntityAttack(Entity caster, float amount);
 
     public (bool isIn, Collider2D? col)IsInShadow()
     {
@@ -97,19 +89,5 @@ public abstract class Entity : MonoBehaviour, IDamagable, IAttackable
         return result;
     }
 
-    public void Attack(Entity caster, float amount)
-    {
-        if(AttackTimerCor == null && WeaponController.nowWeapon != null)
-        {
-            AttackTimerCor = StartCoroutine(AttackTimer(stat.Get(StatType.ATTACK_SPEED)));
-            WeaponController.UsingWeapon();
-            OnEntityAttack(this, stat.Get(StatType.DAMAGE));
-        }
-    }
 
-    private IEnumerator AttackTimer(float attackSpeed)
-    {
-        yield return new WaitForSeconds(1f / attackSpeed);
-        AttackTimerCor = null;
-    }
 }
