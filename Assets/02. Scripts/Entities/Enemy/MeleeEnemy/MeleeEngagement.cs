@@ -3,7 +3,7 @@ using UnityEngine;
 public class MeleeEngagement : IState<Enemy>
 {
     public float TransitionTime { get; set; } = 0.5f;
-    private const float dashDist = 10;
+    private const float dashDist = 5;
     private Vector2 playerPos;
     private Vector2 origin;
 
@@ -11,31 +11,33 @@ public class MeleeEngagement : IState<Enemy>
     {
         caster.navMesh.isStopped = false;
         caster.isLookAtTarget = true;
-
-
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 1.5f);
+        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
         caster.spriteRenderer.color = Color.red;
     }
 
     public void Update(Enemy caster)
     {
-        if (caster.navMesh.isStopped == false)
-            caster.navMesh.destination = playerPos;
 
         origin = caster.transform.position;
         playerPos = caster.playerTr.transform.position;
         caster.targetPos = playerPos;
+        caster.navMesh.destination = playerPos;
 
         if ((origin - playerPos).magnitude > dashDist)
         {
             caster.stateMachine.ChangeState(new MeleeDash(), 0.25f);
         }
+
+        if ((origin - playerPos).magnitude <= caster.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE) && caster.CanAttack)
+        {
+            caster.stateMachine.ChangeState(new MeleeBasicAttack(), 0.25f);
+        }
     }
 
     public void Finish(Enemy caster)
     {
-        caster.isLookAtTarget = false;
         caster.navMesh.isStopped = true;
+        caster.isLookAtTarget = false;
         caster.navMesh.ResetPath();
     }
 }

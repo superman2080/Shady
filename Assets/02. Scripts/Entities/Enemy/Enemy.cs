@@ -22,7 +22,7 @@ public abstract class Enemy : Entity, IAttackable
 
     [Header("Related to sight")]
     public float recogDist;
-    [Range(30, 90)] public float sightAngle;
+    [Range(10, 180)] public float sightAngle;
     public LayerMask recogLayer;
     public Transform? playerTr { get; private set; }
 
@@ -32,6 +32,8 @@ public abstract class Enemy : Entity, IAttackable
     public WeaponCtrl WeaponController { get; protected set; }
 
     public WeaponStat weaponStat { get => WeaponController.weaponStat; }
+
+    public bool CanAttack { get => AttackTimerCor == null && WeaponController.nowWeapon != null; }
 
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Player"); }
     #endregion
@@ -51,11 +53,12 @@ public abstract class Enemy : Entity, IAttackable
     {
         stateMachine?.Update();
         LookAtTarget(isLookAtTarget, rotationSpeed);
+        navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
     }
 
     public bool IsPlayerInSight(float range, float angle, int layer)
     {
-        List<GameObject>? list = FieldOfView(range, angle, layer);
+        List<GameObject>? list = FieldOfView(range, angle / 2, layer);
         if (list == null)
             return false;
         return list.Exists(obj => obj.TryGetComponent(out PlayerCtrl player));
@@ -63,11 +66,11 @@ public abstract class Enemy : Entity, IAttackable
 
     private void OnDrawGizmos()
     {
-
         Vector2 origin = transform.position;
         float angle = transform.eulerAngles.z;
-        Vector2 leftSight = new Vector2(Mathf.Cos((angle + sightAngle) * Mathf.Deg2Rad), Mathf.Sin((angle + sightAngle) * Mathf.Deg2Rad)).normalized;
-        Vector2 rightSight = new Vector2(Mathf.Cos((angle - sightAngle) * Mathf.Deg2Rad), Mathf.Sin((angle - sightAngle) * Mathf.Deg2Rad)).normalized;
+        float sA = sightAngle / 2f;
+        Vector2 leftSight = new Vector2(Mathf.Cos((angle + sA) * Mathf.Deg2Rad), Mathf.Sin((angle + sA) * Mathf.Deg2Rad)).normalized;
+        Vector2 rightSight = new Vector2(Mathf.Cos((angle - sA) * Mathf.Deg2Rad), Mathf.Sin((angle - sA) * Mathf.Deg2Rad)).normalized;
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(origin, recogDist);
 
@@ -186,7 +189,7 @@ public abstract class Enemy : Entity, IAttackable
 
     public void Attack(Entity caster, float amount)
     {
-        if (AttackTimerCor == null && WeaponController.nowWeapon != null)
+        if (CanAttack)
         {
             WeaponController.UsingWeapon();
             OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));

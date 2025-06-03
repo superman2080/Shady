@@ -7,10 +7,8 @@ public class MeleeEnemy : Enemy, IAttackable
     protected override void Start()
     {
         base.Start();
-        WeaponController.SetWeapon(new Dagger());
+        WeaponController.SetWeapon(new Hammer());
         stateMachine = new StateMachine<Enemy>(this, new MeleePatrol());
-        entityStat.SetDefault(EntityStatType.MOVE_SPEED, 3);
-        navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
     }
 
     protected override void Update()

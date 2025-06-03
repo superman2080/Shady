@@ -14,27 +14,8 @@ public class Dagger : IWeapon
 
         user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_SPEED, 2);
         user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_DISTANCE, 2);
-        user.WeaponController.weaponStat.SetDefault(WeaponStatType.DAMAGE, 50);
+        user.WeaponController.weaponStat.SetDefault(WeaponStatType.DAMAGE, 20f);
     }
-    /*
-             Collider2D[] targets = Physics2D.OverlapCircleAll(origin, range, layer);
-        if (targets.Length <= 0)
-            return null;
-        else
-        {
-            foreach (var target in targets)
-            {
-                Vector2 targetPos = target.transform.position;
-                Vector2 dir = (targetPos - origin).normalized;
-                float theta = Mathf.Acos(Vector3.Dot(transform.right, dir)) * Mathf.Rad2Deg;
-
-                if (Physics2D.Raycast(origin, dir, range, layer).collider == target && theta <= angle)
-                {
-                    result.Add(target.gameObject);
-                }
-            }
-        }
-         */
 
     public void Using(IAttackable user)
     {

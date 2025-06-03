@@ -10,7 +10,7 @@ public class MeleePatrol : IState<Enemy>
 
     public void Start(Enemy caster)
     {
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 0.5f);
+        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 1f);
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 3, 3);
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
