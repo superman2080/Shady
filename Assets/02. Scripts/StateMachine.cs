@@ -39,13 +39,11 @@ public class StateMachine<T> where T: MonoBehaviour
 
     private IEnumerator DelayChangeStateCor(float sec, IState<T> newState)
     {
-        Debug.Log(state.GetType().Name);
         state.Finish(caster);
         state = null;
         yield return new WaitForSeconds(sec);
+        delayCor = null;
         state = newState;
         state.Start(caster);
-        Debug.Log(state.GetType().Name);
-        delayCor = null;
     }
 }
