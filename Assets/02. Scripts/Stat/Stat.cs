@@ -1,55 +1,27 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum StatType
+public enum WeaponStatType
 {
-    MAX_HP,
-    MOVE_SPEED,
     ATTACK_SPEED,
     DAMAGE,
     ATTACK_DISTANCE,
-    SKILL_COOL_DOWN_MAG,
-    SKILL_FORCE_MAG,
-    EXP_RANGE,
-    HEAL_MAG,
 }
 
-public class Stat
+public enum EntityStatType
 {
-    public Dictionary<StatType, float> defaultStat
-        = new Dictionary<StatType, float>()
-        {
-            [StatType.MAX_HP] = 100f,
-            [StatType.MOVE_SPEED] = 1f,
-            [StatType.ATTACK_SPEED] = 1f,   //롤 공속식(초당 n회)
-            [StatType.DAMAGE] = 10f,
-            [StatType.ATTACK_DISTANCE] = 5,
-            [StatType.SKILL_COOL_DOWN_MAG] = 1f,
-            [StatType.SKILL_FORCE_MAG] = 1f,
-            [StatType.EXP_RANGE] = 2f,
-            [StatType.HEAL_MAG] = 1f,
-        },
-    addValue = new (),
-    multipleValue = new (),
-    currentValue = new Dictionary<StatType, float>()
-    {
-        [StatType.MAX_HP] = 100f,
-        [StatType.MOVE_SPEED] = 1f,
-        [StatType.ATTACK_SPEED] = 2f,
-        [StatType.DAMAGE] = 10f,
-        [StatType.ATTACK_DISTANCE] = 5,
-        [StatType.SKILL_COOL_DOWN_MAG] = 1f,
-        [StatType.SKILL_FORCE_MAG] = 1f,
-        [StatType.EXP_RANGE] = 1f,
-        [StatType.HEAL_MAG] = 1f
-    };
+    MAX_HP,
+    MOVE_SPEED,
+}
 
-    public Stat()
-    {
-        InitStat();
-        UpdateStat();
-    }
+public abstract class Stat<T> where T: Enum
+{
+    public Dictionary<T, float> defaultStat = new Dictionary<T, float>();
+    public Dictionary<T, float> addValue = new Dictionary<T, float>();
+    public Dictionary<T, float> multipleValue = new Dictionary<T, float>();
+    public Dictionary<T, float> currentValue = new Dictionary<T, float>();
 
     public void Update()
     {
@@ -59,7 +31,7 @@ public class Stat
 
     public void InitStat()
     {
-        StatType[] statTypes = (StatType[])System.Enum.GetValues(typeof(StatType));
+        T[] statTypes = (T[])Enum.GetValues(typeof(T));
 
         foreach (var stat in statTypes)
         {
@@ -70,31 +42,87 @@ public class Stat
 
     public void UpdateStat()
     {
-        StatType[] statTypes = (StatType[])System.Enum.GetValues(typeof(StatType));
+        T[] statTypes = (T[])Enum.GetValues(typeof(T));
         foreach (var type in statTypes)
         {
             currentValue[type] = (defaultStat[type] + addValue[type]) * multipleValue[type];
         }
     }
 
-    public void SetDefault(StatType type, float defaultVal)
+    public void SetDefault(T type, float defaultVal)
     {
         defaultStat[type] = defaultVal;
         Update();
     }
 
-    public void Add(StatType type, float addition)
+    public void Add(T type, float addition)
     {
         addValue[type] += addition;
     }
 
-    public void Multiply(StatType type, float multiplier)
+    public void Multiply(T type, float multiplier)
     {
         multipleValue[type] *= multiplier;
     }
 
-    public float Get(StatType type)
+    public float Get(T type)
     {
         return currentValue[type];
+    }
+}
+
+public class EntityStat: Stat<EntityStatType>
+{
+    //public Dictionary<EntityStatType, float> defaultStat = new Dictionary<EntityStatType, float>()
+    //    {
+    //        [EntityStatType.MAX_HP] = 100f,
+    //        [EntityStatType.MOVE_SPEED] = 1f,
+    //    };
+
+    //public Dictionary<EntityStatType, float> currentValue = new Dictionary<EntityStatType, float>()
+    //    {
+    //        [EntityStatType.MAX_HP] = 100f,
+    //        [EntityStatType.MOVE_SPEED] = 1f,
+    //    };
+
+    public EntityStat()
+    {
+        defaultStat = new Dictionary<EntityStatType, float>()
+        {
+            [EntityStatType.MAX_HP] = 100f,
+            [EntityStatType.MOVE_SPEED] = 1f,
+        };
+
+        currentValue = new Dictionary<EntityStatType, float>()
+        {
+            [EntityStatType.MAX_HP] = 100f,
+            [EntityStatType.MOVE_SPEED] = 1f,
+        };
+
+        InitStat();
+        UpdateStat();
+    }
+}
+
+public class WeaponStat: Stat<WeaponStatType>
+{
+    public WeaponStat()
+    {
+        defaultStat = new Dictionary<WeaponStatType, float>()
+        {
+            [WeaponStatType.ATTACK_DISTANCE] = 2f,
+            [WeaponStatType.ATTACK_SPEED] = 1f,
+            [WeaponStatType.DAMAGE] = 25f,
+        };
+
+        currentValue = new Dictionary<WeaponStatType, float>()
+        {
+            [WeaponStatType.ATTACK_DISTANCE] = 2f,
+            [WeaponStatType.ATTACK_SPEED] = 1f,
+            [WeaponStatType.DAMAGE] = 25f,
+        };
+
+        InitStat();
+        UpdateStat();
     }
 }

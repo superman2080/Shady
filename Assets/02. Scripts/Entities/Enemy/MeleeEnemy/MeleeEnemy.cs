@@ -1,17 +1,16 @@
 using UnityEngine;
+using System.Collections;
 
-public class MeleeEnemy : Enemy
+public class MeleeEnemy : Enemy, IAttackable
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected override void Start()
     {
         base.Start();
-
+        WeaponController.SetWeapon(new Dagger());
         stateMachine = new StateMachine<Enemy>(this, new MeleePatrol());
-        weaponCtrl = new WeaponCtrl(this, new Dagger());
-        stat.SetDefault(StatType.MOVE_SPEED, 3);
-        navMesh.speed = stat.Get(StatType.MOVE_SPEED);
-        navMesh.angularSpeed = rotationSpeed;
+        entityStat.SetDefault(EntityStatType.MOVE_SPEED, 3);
+        navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
     }
 
     protected override void Update()
@@ -19,11 +18,11 @@ public class MeleeEnemy : Enemy
         base.Update();
     }
 
-    protected override void OnEntityDied(Entity caster)
+    protected override void OnEntityDied(IAttackable caster)
     {
     }
 
-    protected override void OnTakeDamage(Entity caster, float amount)
+    protected override void OnTakeDamage(IAttackable caster, float amount)
     {
     }
 
@@ -31,7 +30,7 @@ public class MeleeEnemy : Enemy
     {
     }
 
-    protected override void OnEntityAttack(Entity caster, float amount)
+    public override void OnEntityAttack(Entity caster, float amount)
     {
     }
 }
