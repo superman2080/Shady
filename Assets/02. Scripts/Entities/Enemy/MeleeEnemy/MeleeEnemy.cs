@@ -3,12 +3,17 @@ using System.Collections;
 
 public class MeleeEnemy : Enemy, IAttackable
 {
+    public Vector3 originPos;
+
+    public override IState<Enemy> DefaultState { get => new MeleePatrol();}
+    public override IState<Enemy> AttackState { get => new MeleeEngagement();}
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected override void Start()
     {
         base.Start();
         WeaponController.SetWeapon(new Hammer());
-        stateMachine = new StateMachine<Enemy>(this, new MeleePatrol());
+        originPos = transform.position;
     }
 
     protected override void Update()
@@ -29,6 +34,10 @@ public class MeleeEnemy : Enemy, IAttackable
     }
 
     public override void OnEntityAttack(Entity caster, float amount)
+    {
+    }
+
+    protected override void OnAuditoryDectected(Vector2 detectPos)
     {
     }
 }

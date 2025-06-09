@@ -17,6 +17,8 @@ public class MeleeEngagement : IState<Enemy>
 
     public void Update(Enemy caster)
     {
+        if (caster.playerTr == null)
+            caster.stateMachine.ChangeStateImmediately(new MeleePatrol());
 
         origin = caster.transform.position;
         playerPos = caster.playerTr.transform.position;
@@ -28,9 +30,9 @@ public class MeleeEngagement : IState<Enemy>
             caster.stateMachine.ChangeState(new MeleeDash(), 0.25f);
         }
 
-        if ((origin - playerPos).magnitude <= caster.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE) && caster.CanAttack)
+        if ((origin - playerPos).magnitude <= caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE) && caster.CanAttack)
         {
-            caster.stateMachine.ChangeState(new MeleeBasicAttack(), 0.25f);
+            caster.stateMachine.ChangeState(new MeleeBasicAttack(), 0.75f);
         }
     }
 

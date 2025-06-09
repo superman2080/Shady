@@ -88,6 +88,4 @@ public abstract class Entity : MonoBehaviour, IDamagable
         }
         return result;
     }
-
-
 }

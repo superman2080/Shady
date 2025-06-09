@@ -6,8 +6,6 @@ public class MeleePatrol : IState<Enemy>
     private Vector2[] patrolPos = new Vector2[3];
     private int idx = 0;
 
-    public float TransitionTime { get; set; } = 0.5f;
-
     public void Start(Enemy caster)
     {
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 1f);

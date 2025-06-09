@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class StateMachine<T> where T: MonoBehaviour
 {
+    public IState<T> State { get => state; }
     private IState<T> state;
     private T caster;
     private Coroutine delayCor;

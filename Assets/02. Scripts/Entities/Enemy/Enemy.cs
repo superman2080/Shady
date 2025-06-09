@@ -1,5 +1,7 @@
 #nullable enable
 #pragma warning disable CS8602
+#pragma warning disable CS8625
+#pragma warning disable CS8618
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
@@ -13,30 +15,39 @@ public abstract class Enemy : Entity, IAttackable
     [HideInInspector] public NavMeshAgent? navMesh;
     [HideInInspector] public Vector2 targetPos;
 
-    [Header("Related to suspicion state")]
-    public float searchTime;
-    public float searchRange;
-    public float engageTime;
+    //[Header("Related to suspicion state")]
+    //public float searchRange;
     public bool isLookAtTarget { get; set; } = true;
     public float rotationSpeed = 150f;
 
     [Header("Related to sight")]
-    public float recogDist;
+    [Min(0.5f)] public float recogDist;
     [Range(10, 180)] public float sightAngle;
     public LayerMask recogLayer;
     public Transform? playerTr { get; private set; }
+    #region AuditoryAttribute
+    public AnimationCurve listenPercentage = AnimationCurve.Linear(0, 1, 1, 0);
+    [Min(0.5f)] public float listenDist;
+    private Vector2 latePlayerPos;
+    #endregion
+
+    public abstract IState<Enemy> DefaultState { get; }
+    public abstract IState<Enemy> AttackState { get; }
 
     #region IAttackable
+
     public Coroutine AttackTimerCor { get; protected set; } = null;
+
 
     public WeaponCtrl WeaponController { get; protected set; }
 
-    public WeaponStat weaponStat { get => WeaponController.weaponStat; }
-
-    public bool CanAttack { get => AttackTimerCor == null && WeaponController.nowWeapon != null; }
+    public bool CanAttack { get => canAttack = true && WeaponController.nowWeapon != null; }
+    private bool canAttack = true;
 
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Player"); }
     #endregion
+
+
 
     protected override void Start()
     {
@@ -47,6 +58,7 @@ public abstract class Enemy : Entity, IAttackable
         navMesh.updateUpAxis = false;
         navMesh.angularSpeed = rotationSpeed;
         playerTr = FindAnyObjectByType<PlayerCtrl>().transform;
+        stateMachine = new StateMachine<Enemy>(this, DefaultState);
     }
 
     protected virtual void Update()
@@ -54,6 +66,22 @@ public abstract class Enemy : Entity, IAttackable
         stateMachine?.Update();
         LookAtTarget(isLookAtTarget, rotationSpeed);
         navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
+        Vector2 playerPos = playerTr.transform.position;
+        #region Listening Step
+        float step = 0.5f;
+        if (((Vector2)transform.position - playerPos).magnitude <= listenDist && (playerPos - latePlayerPos).magnitude >= step)
+        {
+            latePlayerPos = playerPos;
+            if (HasAuditoryDetection())
+                OnAuditoryDectected(playerPos);
+        }
+        #endregion
+    }
+
+    protected override void LateUpdate()
+    {
+        base.LateUpdate();
+        WeaponController.weaponStat.Update();
     }
 
     public bool IsPlayerInSight(float range, float angle, int layer)
@@ -81,6 +109,9 @@ public abstract class Enemy : Entity, IAttackable
 
         Gizmos.color = Color.green;
         Gizmos.DrawRay(origin, transform.right * recogDist);
+
+        Gizmos.color = Color.white;
+        Gizmos.DrawWireSphere(origin, listenDist);
     }
 
     public bool HasReachedDestination(Vector2 pos)
@@ -157,24 +188,12 @@ public abstract class Enemy : Entity, IAttackable
         return result;
     }
 
-    public void CallOtherEnemies(float range)
-    {
-        Vector2 origin = transform.position;
-        Enemy[] enemies = Physics2D.OverlapCircleAll(origin, range, 1 << LayerMask.NameToLayer("Enemy")).Select(col => col.GetComponent<Enemy>()).ToArray();
-        if (enemies.Length > 0)
-        {
-            foreach (var enemy in enemies)
-            {
-            }
-        }
-    }
-
     private void LookAtTarget(bool lookAt, float rotSpeed)
     {
         if (lookAt)
         {
             Vector2 direction = (targetPos - (Vector2)transform.position).normalized;
-            float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            float targetAngle = GameMath.DirectionToAngle(direction);
             Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
         }
@@ -183,7 +202,7 @@ public abstract class Enemy : Entity, IAttackable
     public Collider2D GetNearestObs()
     {
         Vector2 origin = transform.position;
-        return Physics2D.OverlapCircleAll(origin, searchRange, 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile")).
+        return Physics2D.OverlapCircleAll(origin, recogDist, 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile")).
             OrderBy(o => Vector2.SqrMagnitude((Vector2)o.transform.position - origin)).First();
     }
 
@@ -191,18 +210,19 @@ public abstract class Enemy : Entity, IAttackable
     {
         if (CanAttack)
         {
+            canAttack = false;
             WeaponController.UsingWeapon();
             OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
-            AttackTimerCor = StartCoroutine(AttackTimer(weaponStat.Get(WeaponStatType.ATTACK_SPEED)));
+            new Timer(1f / WeaponController.weaponStat.Get(WeaponStatType.ATTACK_SPEED), () => { canAttack = true; });
         }
     }
 
-
-    private IEnumerator AttackTimer(float attackSpeed)
+    protected bool HasAuditoryDetection()
     {
-        yield return new WaitForSeconds(1f / attackSpeed);
-        AttackTimerCor = null;
+        return GameMath.RollChanceByPercent(listenPercentage.Evaluate(1f - Vector2.Distance(transform.position, playerTr.transform.position) / listenDist));
     }
 
     public abstract void OnEntityAttack(Entity caster, float amount);
+
+    protected abstract void OnAuditoryDectected(Vector2 detectPos);
 }
