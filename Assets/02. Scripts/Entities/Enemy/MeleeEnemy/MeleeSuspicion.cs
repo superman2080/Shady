@@ -1,11 +1,11 @@
-using UnityEngine;
+//using UnityEngine;
 
 
-/*
- * This state is a state where you first move to a suspected location, 
- * then look at a specific point in the radius, 
- * and then return to the combat state if you see the player for a certain period of time or if you can't see it.
-*/
+///*
+// * This state is a state where you first move to a suspected location, 
+// * then look at a specific point in the radius, 
+// * and then return to the combat state if you see the player for a certain period of time or if you can't see it.
+//*/
 
 //public class MeleeSuspicion : IState<Enemy>
 //{
@@ -28,7 +28,7 @@ using UnityEngine;
 
 //    public void Update(Enemy caster)
 //    {
-//        if(caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer) == true)      // If Player is in sight
+//        if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer) == true)      // If Player is in sight
 //        {
 //            detectTime += Time.deltaTime;
 //            Vector2 playerPos = caster.FieldOfView(caster.recogDist, caster.sightAngle, caster.recogLayer).Find(obj => obj.TryGetComponent(out PlayerCtrl player)).transform.position;

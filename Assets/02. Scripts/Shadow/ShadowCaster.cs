@@ -37,6 +37,9 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         sliderUI.value = 1;
         if (maintainTime > 0)
             StartCoroutine(DecreaseStamina(maintainTime));
+
+        lateObstacles = curObstacles;
+        latePos = transform.position;
     }
 
     void Start()
@@ -97,9 +100,11 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
 
-        if (transform.position.Equals(latePos) 
-            && curObstacles.Length == lateObstacles.Length 
-            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y)))
+        if (transform.position.Equals(latePos)
+            && curObstacles.Length == lateObstacles.Length
+            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y))
+            && shadowList.Count >= curObstacles.Length
+            && shadowVertices.Count >= curObstacles.Length)
         {
             for (int i = 0; i < curObstacles.Length; i++)
             {

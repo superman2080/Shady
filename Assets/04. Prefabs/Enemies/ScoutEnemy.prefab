@@ -262,7 +262,7 @@ MonoBehaviour:
   sightAngle: 135
   recogLayer:
     serializedVersion: 2
-    m_Bits: 1280
+    m_Bits: 1472
   listenPercentage:
     serializedVersion: 2
     m_Curve:

@@ -7,13 +7,12 @@ public class ScoutPatrol : IState<Enemy>
 {
     private Vector2[] patrolPos = new Vector2[5];
     private int idx = 0;
-    private List<ShadowCaster> lightList = new List<ShadowCaster>();
 
-    private ShadowCaster lateLight = null;
-    private Vector2 curLightPos;
-    private Vector2 lateLightPos;
-    
+    private List<Vector2> lateLightPosList = new List<Vector2>();
+    private List<Shadow> lateShadowList = new List<Shadow>();
+    private List<Vector2> lateShadowPosList = new List<Vector2>();
     private bool lateIsInShadow;
+
     public void Start(Enemy caster)
     {
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 3f);
@@ -35,46 +34,83 @@ public class ScoutPatrol : IState<Enemy>
         }
         if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
         {
-            Vector2 playerPos = caster.playerTr.position;
-            Vector2 origin = caster.transform.position;
-            Vector2 targetPos = playerPos - (origin - playerPos).normalized * -2;
-            caster.stateMachine.ChangeState(new Doubt(targetPos), 0.5f);
+            caster.stateMachine.ChangeState(new ScoutEngagement(), 0.5f);
         }
 
-        // To compare new light in sight
-        lightList = caster.FieldOfView(caster.recogDist, caster.sightAngle, 1 << LayerMask.NameToLayer("Light"))?.Select((s) => s.GetComponent<ShadowCaster>()).ToList();
-        if(lightList != null)
-        {
-            foreach (var light in lightList)
-            {
-                if(light.activatedTime > 0.1f) {
-                    caster.stateMachine.ChangeState(new Doubt(light.transform.position), 0.5f);
-                    Debug.LogError("Find new light!");
-                }
-            }
-        }
+        FindNewLightSource(caster);
 
-        // When there's a shadow change
-        if (caster.IsInShadow().isIn)
-        {
-            // When you go into another shadow
-            if (caster.IsInShadow().col.GetComponent<Shadow>().lightSource != lateLight)
-            {
-                lateLight = caster.IsInShadow().col.GetComponent<Shadow>().lightSource;
-                lateLightPos = curLightPos;
-            }
-            curLightPos = caster.IsInShadow().col.GetComponent<Shadow>().lightSource.transform.position;
-            Debug.Log(caster.IsInShadow().isIn != lateIsInShadow);
-            if (Time.time > 0.1f && caster.IsInShadow().isIn != lateIsInShadow && (curLightPos - lateLightPos).sqrMagnitude >= 0.0001f)
-                caster.stateMachine.ChangeState(new Doubt(curLightPos), 0.5f);
-        }
-        lateLightPos = curLightPos;
-        lateIsInShadow = caster.IsInShadow().isIn;
+        HasDifferentShadowInSight(caster);
     }
 
     public void Finish(Enemy caster)
     {
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
+    }
+
+    private void FindNewLightSource(Enemy caster)
+    {
+        var lightList = caster.FieldOfView(caster.recogDist, caster.sightAngle, 1 << LayerMask.NameToLayer("Light"))?.Select((s) => s.GetComponent<ShadowCaster>()).ToList();
+        if (lightList != null)
+        {
+            foreach (var light in lightList)
+            {
+                if (light.activatedTime > 0.1f)
+                {
+                    caster.stateMachine.ChangeState(new Doubt(light.transform.position), 0.5f);
+                    Debug.LogError("Find new light!");
+                }
+            }
+        }
+    }
+
+    private void HasDifferentShadowInSight(Enemy caster)
+    {
+        Vector2 origin = caster.transform.position;
+
+        var curShadowList = caster.FieldOfView<Shadow>(caster.recogDist, caster.sightAngle, 1 << LayerMask.NameToLayer("Shadow"))?.ToList() ?? new List<Shadow>();
+        var curLightPosList = curShadowList.Select(o => (Vector2)o.lightSource.transform.position).Distinct().ToList();
+
+        // Changed shadow shape
+        if(curLightPosList.Count > 0 && lateLightPosList.Count > 0 && curLightPosList.Count == lateLightPosList.Count)
+        {
+            var diff = curLightPosList.Except(lateLightPosList).FirstOrDefault();
+            if(diff != default)
+            {
+                Debug.LogError("Changed shadow shape");
+                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, diff, 2)), 0.5f);
+                return;
+            }
+        }
+        // Find a new shadow in sight
+        if (curShadowList.Count > 0 && curShadowList.Count > lateShadowList.Count)
+        {
+            Shadow except = curShadowList.Except(lateShadowList).First();
+
+            if (except.lightSource.activatedTime > 0.1f && except.lightSource.activatedTime >= Time.time)
+            {
+                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, except.lightSource.transform.position, 2)), 0.5f);
+                Debug.LogError("Find a new shadow in sight");
+                return;
+            }
+        }
+        //Disappear shadow in sight
+        else if (lateShadowList.Count > 0 && lateShadowList.Count > curShadowList.Count)
+        {
+            foreach (var shadow in lateShadowList)
+            {
+                if(!curShadowList.Exists(s => s == shadow) && caster.IsInShadow().isIn == lateIsInShadow && lateShadowList.Find(o => o == shadow).lightSource == null)
+                {
+                    int idx = lateShadowList.FindIndex(o => o == shadow);
+                    caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, lateShadowPosList[idx], 2)), 0.5f);
+                    Debug.LogError("Disappear shadow in sight");
+                    return;
+                }
+            }
+        }
+        lateShadowList = curShadowList.ToList();
+        lateShadowPosList = curShadowList.Select(t => (Vector2)t.lightSource.transform.position).ToList();
+        lateIsInShadow = caster.IsInShadow().isIn;
+        lateLightPosList = curLightPosList.ToList();
     }
 }

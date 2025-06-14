@@ -19,4 +19,9 @@ public class GameMath
         percent = Mathf.Clamp01(percent);
         return Random.value <= percent;
     }
+
+    public static Vector2 GetOffsetPosition(Vector2 origin, Vector2 moveTo, float dist)
+    {
+        return moveTo - ((origin - moveTo).normalized * -dist);
+    }
 }

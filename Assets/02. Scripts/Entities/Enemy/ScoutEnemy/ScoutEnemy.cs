@@ -43,7 +43,7 @@ public class ScoutEnemy : Enemy
     {
         Debug.Log("Detected!");
         Vector2 origin = transform.position;
-        Vector2 targetPos = detectPos - (origin - detectPos).normalized * -2;
+        Vector2 targetPos = GameMath.GetOffsetPosition(origin, detectPos, 2);
         stateMachine.ChangeState(new Doubt(targetPos), 0.5f);
     }
 }

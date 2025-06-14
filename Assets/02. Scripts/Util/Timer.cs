@@ -17,17 +17,24 @@ public class Timer
         this.duration = duration;
         this.timeLeft = duration;
         this.onComplete = onComplete;
+        Start();
     }
 
     public void Start()
     {
         isRunning = true;
-        timeLeft = duration;
     }
 
     public void Stop()
     {
         isRunning = false;
+    }
+
+    public void Reset(Action onReset)
+    {
+        timeLeft = duration;
+        isRunning = true;
+        onReset?.Invoke();
     }
 
     public void Update(float deltaTime)

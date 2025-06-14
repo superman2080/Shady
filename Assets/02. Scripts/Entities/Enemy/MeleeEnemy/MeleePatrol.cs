@@ -13,6 +13,7 @@ public class MeleePatrol : IState<Enemy>
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
         caster.isLookAtTarget = true;
+        caster.rotationSpeed = 150f;
 
         caster.spriteRenderer.color = Color.green;
     }

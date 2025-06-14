@@ -13,6 +13,7 @@ public class MeleeEngagement : IState<Enemy>
         caster.isLookAtTarget = true;
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
         caster.spriteRenderer.color = Color.red;
+        caster.rotationSpeed = 150f;
     }
 
     public void Update(Enemy caster)
@@ -25,7 +26,7 @@ public class MeleeEngagement : IState<Enemy>
         caster.targetPos = playerPos;
         caster.navMesh.destination = playerPos;
 
-        if ((origin - playerPos).magnitude > dashDist)
+        if ((origin - playerPos).magnitude > dashDist && (caster as MeleeEnemy).CanDash)
         {
             caster.stateMachine.ChangeState(new MeleeDash(), 0.25f);
         }

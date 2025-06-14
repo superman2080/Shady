@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
+[System.Serializable]
 public class StateMachine<T> where T: MonoBehaviour
 {
     public IState<T> State { get => state; }

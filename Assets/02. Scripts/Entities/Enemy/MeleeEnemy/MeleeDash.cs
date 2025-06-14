@@ -2,8 +2,7 @@ using UnityEngine;
 
 public class MeleeDash : IState<Enemy>
 {
-    public float TransitionTime { get; set; } = 0.5f;
-    public Vector2 targetPos;
+    private Vector2 targetPos;
 
     private Vector2 origin;
     private float elapsedTime;
@@ -11,12 +10,13 @@ public class MeleeDash : IState<Enemy>
     public void Start(Enemy caster)
     {
         origin = caster.transform.position;
+        Vector2 playerPos = caster.playerTr.position;
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
         caster.spriteRenderer.color = Color.blue;
+        caster.rotationSpeed = 720f;
 
-        Vector2 playerPos = caster.playerTr.position;
-        targetPos = playerPos - (((Vector2)caster.transform.position - playerPos).normalized * -2);
+        targetPos = GameMath.GetOffsetPosition(origin, playerPos, 2);
     }
 
     public void Update(Enemy caster)
@@ -31,7 +31,8 @@ public class MeleeDash : IState<Enemy>
     {
         caster.isLookAtTarget = true;
         caster.navMesh.isStopped = false;
-
+        (caster as MeleeEnemy).SetDashTimer();
+        caster.rotationSpeed = 150f;
     }
 
     private float GetEaseOutT(float elapsedTime, float duration)
