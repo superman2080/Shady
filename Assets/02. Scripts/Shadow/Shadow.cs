@@ -46,6 +46,30 @@ public class Shadow : MonoBehaviour
         mesh.RecalculateBounds();
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.TryGetComponent(out IShadowInteractable obj))
+        {
+            obj.OnEnter(col);
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out IShadowInteractable obj))
+        {
+            obj.OnStay(col);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out IShadowInteractable obj))
+        {
+            obj.OnExit(col);
+        }
+    }
+
     private void OnDisable()
     {
         lightSource = null;

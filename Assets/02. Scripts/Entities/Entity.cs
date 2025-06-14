@@ -86,8 +86,34 @@ public abstract class Entity : MonoBehaviour, IDamagable
                 }
             }
         }
-        return result;
+        return result.OrderBy((s) => (origin - (Vector2)s.transform.position).sqrMagnitude).ToList();
     }
 
 
+    public List<T>? FieldOfView<T>(float range, float angle, int layer) where T : MonoBehaviour
+    {
+        Vector2 origin = transform.position;
+        List<T> result = new List<T>();
+        Collider2D[] targets = Physics2D.OverlapCircleAll(origin, range, layer);
+        if (targets.Length <= 0)
+            return null;
+        else
+        {
+            foreach (var target in targets)
+            {
+                if (target.TryGetComponent(out T obj) == true)
+                {
+                    Vector2 targetPos = target.transform.position;
+                    Vector2 dir = (targetPos - origin).normalized;
+                    float theta = Mathf.Acos(Vector3.Dot(transform.right, dir)) * Mathf.Rad2Deg;
+
+                    if (Physics2D.Raycast(origin, dir, range, layer).collider == target && theta <= angle)
+                    {
+                        result.Add(target.GetComponent<T>());
+                    }
+                }
+            }
+        }
+        return result.OrderBy((s) => (origin - (Vector2)s.transform.position).sqrMagnitude).ToList();
+    }
 }

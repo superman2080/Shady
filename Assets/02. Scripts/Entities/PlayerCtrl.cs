@@ -37,13 +37,12 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     #endregion
 
     #region IAttackable
-    public Coroutine AttackTimerCor { get; protected set; } = null;
 
     public WeaponCtrl WeaponController { get; protected set; }
 
-    public WeaponStat weaponStat { get => WeaponController.weaponStat;}
-
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Enemy"); }
+    public bool CanAttack { get => canAttack && WeaponController.nowWeapon != null; }
+    private bool canAttack = true;
     #endregion
 
     void OnEnable()
@@ -58,6 +57,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
         WeaponController = new WeaponCtrl(this);
         WeaponController.SetWeapon(new Dagger());
+        WeaponController.weaponStat.InitStat();
 
         #region Dash
         dashTrail = gameObject.GetComponent<TrailRenderer>();
@@ -77,16 +77,17 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        DiveShadow();
-    }
 
     void FixedUpdate()
     {
         KeyInput();
         Move();
+    }
+
+    protected override void LateUpdate()
+    {
+        base.LateUpdate();
+        WeaponController.weaponStat.Update();
     }
 
     void OnDisable()
@@ -117,6 +118,10 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
                 Attack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
             }
         }
+        if (Input.GetKey(KeyCode.Space))
+        {
+            DiveShadow();
+        }
     }
 
     private void Move()
@@ -133,14 +138,14 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     {
         diveTime = IsInShadow().isIn ? Mathf.Clamp(diveTime - Time.deltaTime, 0, maxDiveTime) : Mathf.Clamp(diveTime + Time.deltaTime, 0, maxDiveTime);
 
-        if(diveTime > 0 && IsInShadow().isIn)
-        {
-            IsInShadow().col.isTrigger = true;
-        }
-        if(diveTime <= 0 && IsInShadow().isIn)
-        {
-            IsInShadow().col.isTrigger = false;
-        }
+        //if(diveTime > 0 && OutOfShadow().isOut)
+        //{
+        //    OutOfShadow().col.isTrigger = true;
+        //}
+        //if(diveTime <= 0 && OutOfShadow().isOut)
+        //{
+        //    OutOfShadow().col.isTrigger = false;
+        //}
     }
 
     private IEnumerator StaminaCor()
@@ -268,6 +273,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     protected override void OnEntityDied(IAttackable caster)
     {
+        MainCineCam.Instance.targetTrList.Remove(transform);
     }
 
     protected override void OnEntityHeal(Entity caster, float amount)
@@ -284,17 +290,12 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     public void Attack(Entity caster, float amount)
     {
-        if (AttackTimerCor == null && WeaponController.nowWeapon != null)
+        if (canAttack && WeaponController.nowWeapon != null)
         {
+            canAttack = false;
             WeaponController.UsingWeapon();
             OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
-            AttackTimerCor = StartCoroutine(AttackTimer(weaponStat.Get(WeaponStatType.ATTACK_SPEED)));
+            new Timer(1f / WeaponController.weaponStat.Get(WeaponStatType.ATTACK_SPEED), () => { canAttack = true; });
         }
-    }
-
-    private IEnumerator AttackTimer(float attackSpeed)
-    {
-        yield return new WaitForSeconds(1f / attackSpeed);
-        AttackTimerCor = null;
     }
 }

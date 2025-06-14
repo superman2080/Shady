@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Linq;
 using UnityEngine.UI;
 using UnityEngine.Rendering.Universal;
+using System;
 
 public class ShadowCaster : MonoBehaviour, ICameraLookable
 {
@@ -16,6 +17,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     [Header("Light Attribute")]
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
     public float minShadowScale = 5f;
+    public float activatedTime { get; private set; }
     private Light2D light2D;
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
     private PlayerCtrl player;
@@ -31,8 +33,13 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     {
         EnableCamera();
         player = FindAnyObjectByType<PlayerCtrl>();
+        activatedTime = Time.time;
         sliderUI.value = 1;
-        StartCoroutine(DecreaseStamina(maintainTime));
+        if (maintainTime > 0)
+            StartCoroutine(DecreaseStamina(maintainTime));
+
+        lateObstacles = curObstacles;
+        latePos = transform.position;
     }
 
     void Start()
@@ -44,17 +51,18 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
     {
         Vector2 origin = transform.position;
 
-        if(Vector2.Distance(origin, player.transform.position) > lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == true)
+        if(player != null && Vector2.Distance(origin, player.transform.position) > lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == true)
         {
             DisableCamera();
         }
-        else if (Vector2.Distance(origin, player.transform.position) < lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == false)
+        else if (player != null && Vector2.Distance(origin, player.transform.position) < lightScale && MainCineCam.Instance.targetTrList.Exists(tr => tr == transform) == false)
         {
             EnableCamera();
         }
 
         GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
         light2D.intensity = lightScale;
+        //LightInteraction();
     }
 
     void LateUpdate()
@@ -76,21 +84,32 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         DisableCamera();
     }
 
+    //private void LightInteraction()
+    //{
+    //    Vector2 origin = transform.position;
+    //    var lightInteractable = Physics2D.OverlapCircleAll(origin, lightScale).Select(o => o.gameObject.GetComponent<ILightInteractable>()).ToArray();
+    //    if (lightInteractable == null || lightInteractable.Length <= 0)
+    //        return;
+    //    foreach (var obj in lightInteractable)
+    //    {
+    //    }
+    //}
+
     private void GenerateShadow(float lS, float mS, int layer)
     {
         curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
 
-        if (transform.position.Equals(latePos) 
-            && curObstacles.Length == lateObstacles.Length 
-            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y)))
+        if (transform.position.Equals(latePos)
+            && curObstacles.Length == lateObstacles.Length
+            && curObstacles.All(o => lateObstacles.Any(l => o.transform.position.x == l.transform.position.x && o.transform.position.y == l.transform.position.y))
+            && shadowList.Count >= curObstacles.Length
+            && shadowVertices.Count >= curObstacles.Length)
         {
             for (int i = 0; i < curObstacles.Length; i++)
             {
                 shadowList[i].GenerateShadow(shadowVertices[i]);
             }
-
-
         }
         else
         {

@@ -6,8 +6,6 @@ public class Dagger : IWeapon
 {
     public LayerMask AttackLayer { get; private set; }
 
-    public WeaponStat weaponStat { get; private set; } = new WeaponStat();
-
     public void InitWeapon(IAttackable user)
     {
         AttackLayer = user.AttackLayer;

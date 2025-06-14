@@ -4,8 +4,6 @@ public class Hammer : IWeapon
 {
     public LayerMask AttackLayer { get; private set; }
 
-    public WeaponStat weaponStat { get; private set; }
-
     public void InitWeapon(IAttackable user)
     {
         AttackLayer = user.AttackLayer;
