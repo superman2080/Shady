@@ -17,7 +17,7 @@ public class StateMachine<T> where T: MonoBehaviour
         this.state.Start(caster);
     }
 
-    public void ChangeState(IState<T> newState, float delayTime)
+    public void ChangeState(IState<T> newState, float delayTime = 0.5f)
     {
         if (state == newState || delayCor != null) return;
 
