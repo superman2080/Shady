@@ -19,14 +19,14 @@ public class EnemyCaller : IWeapon
         Doubt taunt = new Doubt(GameMath.GetOffsetPosition(origin, playerPos, 2));
         float dist = user.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE);
 
-        Enemy[] enemies = Physics2D.OverlapCircleAll(origin, dist, 1 << LayerMask.NameToLayer("Enemy")).Select(col => col.GetComponent<Enemy>()).ToArray();
+        Enemy[] enemies = Physics2D.OverlapCircleAll(origin, dist, AttackLayer).Select(col => col.GetComponent<Enemy>()).ToArray();
         if (enemies.Length > 0)
         {
             foreach (var enemy in enemies)
             {
-                if (enemy.stateMachine.State.GetType().Name == enemy.DefaultState.GetType().Name)
+                if (enemy.stateMachine.State?.GetType().Name == enemy.DefaultState.GetType().Name)
                 {
-                    Debug.Log("Doubt");
+                    Debug.Log($"{enemy.gameObject.name}: Doubt");
                     enemy.stateMachine.ChangeStateImmediately(taunt);
                 }
             }

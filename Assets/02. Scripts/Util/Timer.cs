@@ -4,20 +4,25 @@ using UnityEngine;
 public class Timer
 {
     private float duration;
-
-    private Action onComplete;
-
-    public bool IsRunning => isRunning;
-    public float TimeLeft => timeLeft;
     private float timeLeft;
     private bool isRunning = false;
 
-    public Timer(float duration, Action onComplete)
+    private Action onComplete;
+    private Action onUpdate;
+
+    public bool IsRunning => isRunning;
+    public float TimeLeft => timeLeft;
+
+    public Timer(float duration, Action onComplete, Action onUpdate = null, bool autoStart = true)
     {
         this.duration = duration;
         this.timeLeft = duration;
         this.onComplete = onComplete;
+        this.onUpdate = onUpdate;
+
         Start();
+        if (autoStart)
+            TimerRunner.Instance.Register(this);
     }
 
     public void Start()
@@ -30,23 +35,26 @@ public class Timer
         isRunning = false;
     }
 
-    public void Reset(Action onReset)
+    public void Reset(Action onReset = null)
     {
         timeLeft = duration;
-        isRunning = true;
         onReset?.Invoke();
+        Start();
     }
 
     public void Update(float deltaTime)
     {
         if (!isRunning) return;
 
-        timeLeft -= deltaTime;
         if (timeLeft <= 0f)
         {
             isRunning = false;
             onComplete?.Invoke();
         }
+        else
+        {
+            timeLeft = Mathf.Clamp(timeLeft - deltaTime, 0, duration);
+            onUpdate?.Invoke();
+        }
     }
-
 }

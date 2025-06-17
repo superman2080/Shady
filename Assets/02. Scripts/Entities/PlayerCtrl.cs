@@ -41,8 +41,6 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     public WeaponCtrl WeaponController { get; protected set; }
 
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Enemy"); }
-    public bool CanAttack { get => canAttack && WeaponController.nowWeapon != null; }
-    private bool canAttack = true;
     #endregion
 
     void OnEnable()
@@ -290,12 +288,10 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     public void Attack(Entity caster, float amount)
     {
-        if (canAttack && WeaponController.nowWeapon != null)
+        if (WeaponController.CanAttack)
         {
-            canAttack = false;
             WeaponController.UsingWeapon();
             OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
-            new Timer(1f / WeaponController.weaponStat.Get(WeaponStatType.ATTACK_SPEED), () => { canAttack = true; });
         }
     }
 }

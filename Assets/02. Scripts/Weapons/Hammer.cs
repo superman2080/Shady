@@ -15,6 +15,11 @@ public class Hammer : IWeapon
 
     public void Using(IAttackable user)
     {
+        new Timer(Mathf.Lerp(0, 1f / user.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_SPEED), 0.5f), () => Casting(user));
+    }
+
+    public void Casting(IAttackable user)
+    {
         var transform = (user as MonoBehaviour).transform;
         Vector2 origin = transform.position;
         Vector2 dir = transform.right;

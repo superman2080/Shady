@@ -11,7 +11,6 @@ using UnityEngine.AI;
 public abstract class Enemy : Entity, IAttackable
 {
     [HideInInspector] public StateMachine<Enemy>? stateMachine;
-    [HideInInspector] public WeaponCtrl? weaponCtrl;
     [HideInInspector] public NavMeshAgent? navMesh;
     [HideInInspector] public Vector2 targetPos;
 
@@ -34,15 +33,13 @@ public abstract class Enemy : Entity, IAttackable
     public abstract IState<Enemy> DefaultState { get; }
     public abstract IState<Enemy> AttackState { get; }
 
+
     #region IAttackable
 
     public Coroutine AttackTimerCor { get; protected set; } = null;
 
 
     public WeaponCtrl WeaponController { get; protected set; }
-
-    public bool CanAttack { get => canAttack = true && WeaponController.nowWeapon != null; }
-    private bool canAttack = true;
 
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Player"); }
     #endregion
@@ -52,12 +49,15 @@ public abstract class Enemy : Entity, IAttackable
     protected override void Start()
     {
         base.Start();
-        WeaponController = new WeaponCtrl(this);
+        playerTr = FindAnyObjectByType<PlayerCtrl>().transform;
+        latePlayerPos = playerTr.transform.position;
+
         navMesh = gameObject.GetComponent<NavMeshAgent>();
         navMesh.updateRotation = false;
         navMesh.updateUpAxis = false;
         navMesh.angularSpeed = rotationSpeed;
-        playerTr = FindAnyObjectByType<PlayerCtrl>().transform;
+
+        WeaponController = new WeaponCtrl(this);
         stateMachine = new StateMachine<Enemy>(this, DefaultState);
     }
 
@@ -92,7 +92,7 @@ public abstract class Enemy : Entity, IAttackable
         return list.Exists(obj => obj.TryGetComponent(out PlayerCtrl player));
     }
 
-    private void OnDrawGizmos()
+    protected virtual void OnDrawGizmos()
     {
         Vector2 origin = transform.position;
         float angle = transform.eulerAngles.z;
@@ -208,12 +208,10 @@ public abstract class Enemy : Entity, IAttackable
 
     public void Attack(Entity caster, float amount)
     {
-        if (CanAttack)
+        if (WeaponController.CanAttack)
         {
-            canAttack = false;
             WeaponController.UsingWeapon();
             OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
-            new Timer(1f / WeaponController.weaponStat.Get(WeaponStatType.ATTACK_SPEED), () => { canAttack = true; });
         }
     }
 

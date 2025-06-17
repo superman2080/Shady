@@ -24,4 +24,22 @@ public class GameMath
     {
         return moveTo - ((origin - moveTo).normalized * -dist);
     }
+
+    public static Vector2 RotateDirection(Vector2 dir, float angleDeg)
+    {
+        float rad = angleDeg * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+
+        return new Vector2(
+            dir.x * cos - dir.y * sin,
+            dir.x * sin + dir.y * cos
+        ).normalized;
+    }
+
+
+    public static bool IsLookingDir(Transform tr, Vector2 target, float threshold)
+    {
+        return Vector2.Angle(tr.right.normalized, target) <= threshold;
+    }
 }

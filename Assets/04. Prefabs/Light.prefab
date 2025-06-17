@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c6a53ddc4f3cb642a65e7ff087b54b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maintainTime: 10
+  maintainTime: 60.6
   sliderUI: {fileID: 4792698634971585392}
   lightScale: 20
   minShadowScale: 5

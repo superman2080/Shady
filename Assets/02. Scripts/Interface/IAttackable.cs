@@ -6,5 +6,4 @@ public interface IAttackable
     public void Attack(Entity caster, float amount);
     public void OnEntityAttack(Entity caster, float amount);
     public LayerMask AttackLayer { get; }
-    public bool CanAttack { get; }
 }
