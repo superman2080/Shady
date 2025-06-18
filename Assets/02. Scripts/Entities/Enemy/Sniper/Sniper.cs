@@ -4,11 +4,11 @@ public class Sniper : Enemy, IAttackable
 {
     public override IState<Enemy> DefaultState => new SniperPatrol();
 
-    public override IState<Enemy> AttackState => throw new System.NotImplementedException();
+    public override IState<Enemy> AttackState => new SniperEngagement();
 
     [Range(0, 180f)] public float patrolRadius;
     [HideInInspector] public Vector2 originDir;
-    public Vector2[] patrolAreaEdge = new Vector2[2];
+    [HideInInspector] public Vector2[] patrolAreaEdge = new Vector2[2];
     private Vector2 origin;
 
     protected override void Start()
