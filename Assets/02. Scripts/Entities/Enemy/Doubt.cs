@@ -17,26 +17,34 @@ public class Doubt : IState<Enemy>
     public void Start(Enemy caster)
     {
         canMove = caster.entityStat.Get(EntityStatType.MOVE_SPEED) > 0;
-        originPos = caster.transform.position;
         caster.targetPos = targetPos;
         caster.isLookAtTarget = true;
-        caster.navMesh.destination = targetPos;
-        timer = new Timer(3f, () =>
+        if (canMove)
         {
-            caster.targetPos = originPos;
-            caster.navMesh.destination = originPos;
-            hasReached = true;
-            Debug.Log("End");
-        });
+            originPos = caster.transform.position;
+            caster.navMesh.destination = targetPos;
+            timer = new Timer(3f, () =>
+            {
+                caster.targetPos = originPos;
+                caster.navMesh.destination = originPos;
+                hasReached = true;
+            }, null, false);
+        }
+        else
+        {
+            timer = new Timer(5f, () =>
+            {
+                caster.stateMachine.ChangeStateImmediately(caster.DefaultState);
+            }, null, false);
+        }
     }
 
     public void Update(Enemy caster)
     {
+        if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
+            caster.stateMachine.ChangeStateImmediately(caster.AttackState);
         if (canMove)
         {
-            if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
-                caster.stateMachine.ChangeStateImmediately(caster.AttackState);
-
             if (caster.HasReachedDestination(targetPos))
             {
                 caster.navMesh.ResetPath();
@@ -48,13 +56,10 @@ public class Doubt : IState<Enemy>
         }
         else
         {
-            float dot = Vector2.Dot(caster.transform.right, (targetPos - originPos).normalized);
-            if(dot >= 0.99f)
+            if(GameMath.IsLookingDir(caster.transform, (targetPos - originPos).normalized, 3))
             {
                 timer.Update(Time.deltaTime);
             }
-            if(timer.IsRunning == false)
-                caster.stateMachine.ChangeStateImmediately(caster.DefaultState);
         }
     }
 

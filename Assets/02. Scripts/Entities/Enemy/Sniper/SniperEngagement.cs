@@ -57,47 +57,8 @@ public class SniperEngagement : IState<Enemy>
             aimTrail.SetPosition(1, origin + (Vector2)caster.transform.right * caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE));
             engageTimer.Update(Time.deltaTime);
         }
-
-        ////Target without Sight
-        //if(GameMath.IsLookingDir(caster.transform, targetDir, threshold) == false)
-        //{
-        //    engageTimer.Update(Time.deltaTime);
-        //    aimTrail.SetPosition(1, origin + targetDir * caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE));
-        //}
-        ////Target in sight
-        //else
-        //{
-        //    RaycastHit2D[] curTargets = Physics2D.RaycastAll(origin, targetDir, caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE),
-        //    1 << LayerMask.NameToLayer("Light") | 1 << LayerMask.NameToLayer("Shadow"));
-        //    var except = curTargets.Except(originTargets).ToArray();
-        //    foreach (var item in curTargets)
-        //    {
-        //        Debug.LogError(item.transform.name);
-        //    }
-        //    if (except.Length > 0)
-        //    {
-        //        Debug.LogError(except.First().transform.gameObject.name);
-        //        engageTimer.Update(Time.deltaTime);
-        //        aimTrail.SetPosition(1, except.First().point);
-        //    }
-        //    else
-        //    {
-        //        RaycastHit2D hit = Physics2D.Raycast(origin, targetDir, caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE),
-        //             1 << LayerMask.NameToLayer("Player"));
-        //        if (hit)
-        //        {
-        //            aimingTimer.Start();
-        //            aimTrail.SetPosition(1, hit.point);
-        //            aimingTimer.Update(Time.deltaTime);
-        //        }
-        //        //else
-        //        //{
-        //        //    aimTrail.SetPosition(1, origin + targetDir * caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE));
-        //        //}
-        //    }
-        //}
-
     }
+
     public void Finish(Enemy caster)
     {
         aimTrail.enabled = false;
