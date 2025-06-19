@@ -63,7 +63,6 @@ public abstract class Enemy : Entity, IAttackable
 
     protected virtual void Update()
     {
-
         stateMachine?.Update();
         LookAtTarget(isLookAtTarget, rotationSpeed);
         navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);

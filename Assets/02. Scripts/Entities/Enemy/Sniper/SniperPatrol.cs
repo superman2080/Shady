@@ -7,7 +7,7 @@ public class SniperPatrol : IState<Enemy>
     private Sniper owner;
     private int idx = 0;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.isLookAtTarget = true;
         caster.rotationSpeed = 30f;
@@ -16,7 +16,7 @@ public class SniperPatrol : IState<Enemy>
         caster.targetPos = targetDir;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         if(caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.AttackLayer))
         {
@@ -30,7 +30,7 @@ public class SniperPatrol : IState<Enemy>
             caster.isLookAtTarget = true;
         }
     }
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         caster.isLookAtTarget = false;
     }

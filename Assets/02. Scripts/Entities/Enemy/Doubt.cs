@@ -14,7 +14,7 @@ public class Doubt : IState<Enemy>
         this.targetPos = targetPos;
     }
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         canMove = caster.entityStat.Get(EntityStatType.MOVE_SPEED) > 0;
         caster.targetPos = targetPos;
@@ -39,7 +39,7 @@ public class Doubt : IState<Enemy>
         }
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
             caster.stateMachine.ChangeStateImmediately(caster.AttackState);
@@ -63,7 +63,7 @@ public class Doubt : IState<Enemy>
         }
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         caster.navMesh.ResetPath();
     }

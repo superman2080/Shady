@@ -7,7 +7,7 @@ public class MeleeEngagement : IState<Enemy>
     private Vector2 playerPos;
     private Vector2 origin;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.navMesh.isStopped = false;
         caster.isLookAtTarget = true;
@@ -16,7 +16,7 @@ public class MeleeEngagement : IState<Enemy>
         caster.rotationSpeed = 150f;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         if (caster.playerTr == null)
             caster.stateMachine.ChangeStateImmediately(new MeleePatrol());
@@ -37,7 +37,7 @@ public class MeleeEngagement : IState<Enemy>
         }
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         caster.navMesh.isStopped = true;
         caster.isLookAtTarget = false;

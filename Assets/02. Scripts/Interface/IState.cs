@@ -2,9 +2,9 @@ using UnityEngine;
 
 public interface IState<T>
 {
-    public void Start(T caster);
+    public void Enter(T caster);
 
-    public void Update(T caster);
+    public void Execute(T caster);
 
-    public void Finish(T caster);
+    public void Exit(T caster);
 }

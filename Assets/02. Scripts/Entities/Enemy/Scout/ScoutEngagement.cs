@@ -4,7 +4,7 @@ public class ScoutEngagement : IState<Enemy>
 {
     private Vector2 targetPos;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 5);
         targetPos = caster.RandomReachablePosition(10f);
@@ -13,7 +13,7 @@ public class ScoutEngagement : IState<Enemy>
         caster.targetPos = targetPos;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         caster.Attack(caster, caster.WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
         if (caster.HasReachedDestination(targetPos))
@@ -24,7 +24,7 @@ public class ScoutEngagement : IState<Enemy>
         }
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
     }
 }

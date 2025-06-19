@@ -14,7 +14,7 @@ public class StateMachine<T> where T: MonoBehaviour
     {
         this.caster = caster;
         this.state = state;
-        this.state.Start(caster);
+        this.state.Enter(caster);
     }
 
     public void ChangeState(IState<T> newState, float delayTime = 0.5f)
@@ -28,24 +28,24 @@ public class StateMachine<T> where T: MonoBehaviour
     {
         if (state == newState) return;
 
-        state.Finish(caster);
+        state.Exit(caster);
         state = newState;
-        state.Start(caster);
+        state.Enter(caster);
     }
 
     public void Update()
     {
         if (state != null)
-            state.Update(caster);
+            state.Execute(caster);
     }
 
     private IEnumerator DelayChangeStateCor(float sec, IState<T> newState)
     {
-        state.Finish(caster);
+        state.Exit(caster);
         state = null;
         yield return new WaitForSeconds(sec);
         delayCor = null;
         state = newState;
-        state.Start(caster);
+        state.Enter(caster);
     }
 }

@@ -13,18 +13,18 @@ public class ScoutPatrol : IState<Enemy>
     private List<Vector2> lateShadowPosList = new List<Vector2>();
     private bool lateIsInShadow;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 3f);
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 10, 5);
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
-        caster.isLookAtTarget = true;
+        caster.isLookAtTarget = false;
         caster.rotationSpeed = 180f;
         caster.spriteRenderer.color = Color.green;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         if (caster.HasReachedDestination(patrolPos[idx]))
         {
@@ -42,7 +42,7 @@ public class ScoutPatrol : IState<Enemy>
         HasDifferentShadowInSight(caster);
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();

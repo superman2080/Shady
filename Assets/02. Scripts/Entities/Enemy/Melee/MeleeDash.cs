@@ -7,7 +7,7 @@ public class MeleeDash : IState<Enemy>
     private Vector2 origin;
     private float elapsedTime;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         origin = caster.transform.position;
         Vector2 playerPos = caster.playerTr.position;
@@ -19,7 +19,7 @@ public class MeleeDash : IState<Enemy>
         targetPos = GameMath.GetOffsetPosition(origin, playerPos, 2);
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         elapsedTime += Time.deltaTime;
         caster.transform.position = Vector2.Lerp(origin, targetPos, GetEaseOutT(elapsedTime, 0.25f));
@@ -27,7 +27,7 @@ public class MeleeDash : IState<Enemy>
             caster.stateMachine.ChangeState(new MeleeEngagement(), 0.25f);
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         caster.isLookAtTarget = true;
         caster.navMesh.isStopped = false;
