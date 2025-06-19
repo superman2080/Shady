@@ -8,7 +8,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Wall
   - Water
   - UI
   - Tile
@@ -44,11 +44,14 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Shadow
-    uniqueID: 3240034377
+  - name: Wall
+    uniqueID: 2531731023
     locked: 0
   - name: Tile
     uniqueID: 2878607505
+    locked: 0
+  - name: Shadow
+    uniqueID: 3240034377
     locked: 0
   - name: Light
     uniqueID: 3403702675

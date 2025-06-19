@@ -185,7 +185,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
             yield return null;
         }
 
-        Vector2 origin = (Vector2)transform.position;
+        Vector2 origin = transform.position;
         Vector2 moveTo = Vector2.zero;
         IDamagable[] targets;
         Vector2 targetPos = Vector2.zero;
@@ -209,21 +209,28 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
             {
                 dashTrajectory.enabled = false;
                 moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
-                    Camera.main.ScreenPointToRay(Input.mousePosition).direction, Vector2.Distance(origin, moveTo),
-                    1 << LayerMask.NameToLayer("Shadow"));
+                RaycastHit2D hit = Physics2D.Raycast(origin, (moveTo - origin).normalized, Vector2.Distance(origin, moveTo),
+                    1 << LayerMask.NameToLayer("Wall") | 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile") | 1 << LayerMask.NameToLayer("Shadow"));
 
-                if (hit && hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow") && IsInShadow().isIn)
+                if (hit)
                 {
-                    RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, AttackLayer);
-                    targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
-                    foreach (var target in targets)
+                    Debug.Log($"{hit.collider.name}, {targetPos}");
+                    if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow") && IsInShadow().isIn)
                     {
-                        if (!target.Equals(this))
+                        RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, AttackLayer);
+                        targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
+                        foreach (var target in targets)
                         {
-                            target.TakeDamage(this, target.HP);
-                            Debug.Log(target.GetType().Name);
+                            if (!target.Equals(this))
+                            {
+                                target.TakeDamage(this, target.HP);
+                            }
                         }
+                    }
+                    else if (hit.collider.gameObject.layer != LayerMask.NameToLayer("Shadow"))
+                    {
+                        targetPos = GameMath.GetOffsetPosition(origin, hit.point, 1f);
+ 
                     }
                 }
                 break;

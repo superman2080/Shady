@@ -63,6 +63,7 @@ public abstract class Enemy : Entity, IAttackable
 
     protected virtual void Update()
     {
+
         stateMachine?.Update();
         LookAtTarget(isLookAtTarget, rotationSpeed);
         navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
@@ -197,6 +198,15 @@ public abstract class Enemy : Entity, IAttackable
             Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
         }
+        else if (lookAt == false && navMesh.hasPath)
+        {
+            var path = navMesh.path;
+            Vector2 pos = path.corners.Length >= 2 ? path.corners[1] : navMesh.destination;
+            Vector2 direction = (pos - (Vector2)transform.position).normalized;
+            float targetAngle = GameMath.DirectionToAngle(direction);
+            Quaternion targetRotation = Quaternion.Euler(0, 0, targetAngle);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
+        }
     }
 
     public Collider2D GetNearestObs()
@@ -223,4 +233,5 @@ public abstract class Enemy : Entity, IAttackable
     public abstract void OnEntityAttack(Entity caster, float amount);
 
     protected abstract void OnAuditoryDectected(Vector2 detectPos);
+
 }
