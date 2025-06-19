@@ -187,7 +187,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
         Vector2 origin = transform.position;
         Vector2 moveTo = Vector2.zero;
-        IDamagable[] targets;
+        List<IDamagable> damagables = new List<IDamagable>();
         Vector2 targetPos = Vector2.zero;
         dashTrail.enabled = true;
         dashTrajectory.enabled = true;
@@ -209,29 +209,27 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
             {
                 dashTrajectory.enabled = false;
                 moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                RaycastHit2D hit = Physics2D.Raycast(origin, (moveTo - origin).normalized, Vector2.Distance(origin, moveTo),
+                RaycastHit2D[] hits = Physics2D.CircleCastAll(origin, (col as CircleCollider2D).radius, (moveTo - origin).normalized, Vector2.Distance(origin, moveTo),
                     1 << LayerMask.NameToLayer("Wall") | 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile") | 1 << LayerMask.NameToLayer("Shadow"));
 
-                if (hit)
+                if (hits.Length > 0)
                 {
-                    Debug.Log($"{hit.collider.name}, {targetPos}");
-                    if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Shadow") && IsInShadow().isIn)
+                    for (int i = 0; i < hits.Length; i++)
                     {
-                        RaycastHit2D[] targetHit = Physics2D.CircleCastAll(transform.position, (col as CircleCollider2D).radius, dir, dashDist, AttackLayer);
-                        targets = targetHit.Select(t => t.collider.GetComponent<IDamagable>()).ToArray();
-                        foreach (var target in targets)
+                        if (hits[i].collider.TryGetComponent(out IDamagable damagable))
                         {
-                            if (!target.Equals(this))
-                            {
-                                target.TakeDamage(this, target.HP);
-                            }
+                            damagables.Add(damagable);
                         }
-                    }
-                    else if (hit.collider.gameObject.layer != LayerMask.NameToLayer("Shadow"))
-                    {
-                        targetPos = GameMath.GetOffsetPosition(origin, hit.point, 1f);
- 
-                    }
+                        else if (hits[i].collider.gameObject.layer != LayerMask.NameToLayer("Shadow"))
+                        {
+                            targetPos = GameMath.GetOffsetPosition(origin, hits[i].point, 1f);
+                            break;
+                        }
+                        else if (i == hits.Length - 1 && hits[i].collider.gameObject.layer == LayerMask.NameToLayer("Shadow"))
+                        {
+                            targetPos = moveTo;
+                        }
+                    } 
                 }
                 break;
             }
@@ -245,6 +243,21 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         {
             transform.position = Vector2.Lerp(origin, targetPos, dashSpeed.Evaluate(eT / dashTime));
             yield return null;
+        }
+
+        if(targetPos == moveTo)
+        {
+            foreach (var obj in damagables)
+            {
+                obj.TakeDamage(this, obj.HP);
+            }
+        }
+        else
+        {
+            foreach (var obj in damagables)
+            {
+                obj.TakeDamage(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+            }
         }
 
         dashTrail.enabled = false;

@@ -5,11 +5,11 @@ using System.Collections.Generic;
 public class CMultipleLookAt : IState<MainCineCam>
 {
 
-    public void Start(MainCineCam caster)
+    public void Enter(MainCineCam caster)
     {
     }
 
-    public void Update(MainCineCam caster)
+    public void Execute(MainCineCam caster)
     {
         List<Transform> tL = caster.targetTrList;
 
@@ -40,7 +40,7 @@ public class CMultipleLookAt : IState<MainCineCam>
             caster.SetOrthoSize(Mathf.Max(requiredOrthoSize + 5f, caster.minOrthoSize));
         }
     }
-    public void Finish(MainCineCam caster)
+    public void Exit(MainCineCam caster)
     {
     }
 }

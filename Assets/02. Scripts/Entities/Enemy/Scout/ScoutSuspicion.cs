@@ -11,7 +11,7 @@ public class ScoutSuspicion : IState<Enemy>
         this.suspicionPos = suspicionPos;
     }
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         originPos = caster.transform.position;
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
@@ -19,11 +19,11 @@ public class ScoutSuspicion : IState<Enemy>
         caster.isLookAtTarget = true;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
     }
 }

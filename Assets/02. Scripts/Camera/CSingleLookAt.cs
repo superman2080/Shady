@@ -4,12 +4,12 @@ public class CSingleLookAt : IState<MainCineCam>
 {
     public float TransitionTime { get; set; }
 
-    public void Start(MainCineCam caster)
+    public void Enter(MainCineCam caster)
     {
         caster.SetOrthoSize(caster.minOrthoSize);
     }
 
-    public void Update(MainCineCam caster)
+    public void Execute(MainCineCam caster)
     {
         if(caster.targetTrList.Count <= 0)
         {
@@ -25,7 +25,7 @@ public class CSingleLookAt : IState<MainCineCam>
         }
     }
 
-    public void Finish(MainCineCam caster)
+    public void Exit(MainCineCam caster)
     {
     }
 }

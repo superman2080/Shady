@@ -6,7 +6,7 @@ public class MeleePatrol : IState<Enemy>
     private Vector2[] patrolPos = new Vector2[3];
     private int idx = 0;
 
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 1f);
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 3, 3);
@@ -18,7 +18,7 @@ public class MeleePatrol : IState<Enemy>
         caster.spriteRenderer.color = Color.green;
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         if(caster.HasReachedDestination(patrolPos[idx]))
         {
@@ -32,7 +32,7 @@ public class MeleePatrol : IState<Enemy>
         }    
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         Debug.LogWarning("End Patrol");
         caster.navMesh.isStopped = true;

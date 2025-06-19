@@ -8,7 +8,7 @@ public class SniperEngagement : IState<Enemy>
     private RaycastHit2D[] originTargets;
     private Vector2 origin;
     private LineRenderer aimTrail;
-    public void Start(Enemy caster)
+    public void Enter(Enemy caster)
     {
         caster.isLookAtTarget = true;
 
@@ -28,7 +28,7 @@ public class SniperEngagement : IState<Enemy>
         aimTrail.SetPosition(0, origin);
     }
 
-    public void Update(Enemy caster)
+    public void Execute(Enemy caster)
     {
         caster.targetPos = caster.playerTr.position;
         Vector2 targetDir = ((Vector2)(caster.playerTr.position) - origin).normalized;
@@ -59,7 +59,7 @@ public class SniperEngagement : IState<Enemy>
         }
     }
 
-    public void Finish(Enemy caster)
+    public void Exit(Enemy caster)
     {
         aimTrail.enabled = false;
     }

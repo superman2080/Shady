@@ -62,6 +62,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
 
         GenerateShadow(lightScale, minShadowScale, 1 << LayerMask.NameToLayer("Tile"));
         light2D.intensity = lightScale;
+        light2D.pointLightOuterRadius = lightScale;
         //LightInteraction();
     }
 
@@ -84,21 +85,9 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
         DisableCamera();
     }
 
-    //private void LightInteraction()
-    //{
-    //    Vector2 origin = transform.position;
-    //    var lightInteractable = Physics2D.OverlapCircleAll(origin, lightScale).Select(o => o.gameObject.GetComponent<ILightInteractable>()).ToArray();
-    //    if (lightInteractable == null || lightInteractable.Length <= 0)
-    //        return;
-    //    foreach (var obj in lightInteractable)
-    //    {
-    //    }
-    //}
-
     private void GenerateShadow(float lS, float mS, int layer)
     {
         curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
-
 
         if (lateObstacles != null &&
             transform.position.Equals(latePos)
@@ -216,8 +205,9 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
             Vector3 dir = (point - origin).normalized;
 
             float offset = 0.1f;
+            float hitDist = 1000f;
 
-            RaycastHit2D hit = Physics2D.CircleCast(origin, 0.005f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
+            RaycastHit2D hit = Physics2D.CircleCast(origin, 0.005f, dir, hitDist, 1 << LayerMask.NameToLayer("ScanTile"));
             RaycastHit2D farHit = Physics2D.CircleCast(point + dir * offset, 0.003f, dir, lS, 1 << LayerMask.NameToLayer("ScanTile"));
 
 
@@ -230,6 +220,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable
                 }
                 else if (!farHit)
                 {
+                    // Shadow Length
                     float shadowLen = lS - Vector2.Distance(origin, point) > mD ? lS - Vector2.Distance(origin, point) : mD;
 
                     outerPoints.Add(point + dir * shadowLen);
