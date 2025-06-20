@@ -11,6 +11,7 @@ public abstract class Entity : MonoBehaviour, IDamagable
     public Rigidbody2D rb2d { get; private set; }
     [HideInInspector] public SpriteRenderer spriteRenderer;
     public EntityStat entityStat;
+    public bool canBehavior = true;
     protected Collider2D col;
     [SerializeField] public float HP { get; protected set; }
 

@@ -63,19 +63,23 @@ public abstract class Enemy : Entity, IAttackable
 
     protected virtual void Update()
     {
-        stateMachine?.Update();
-        LookAtTarget(isLookAtTarget, rotationSpeed);
-        navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
         Vector2 playerPos = playerTr.transform.position;
-        #region Listening Step
-        float step = 0.5f;
-        if (((Vector2)transform.position - playerPos).magnitude <= listenDist && (playerPos - latePlayerPos).magnitude >= step)
+        navMesh.isStopped = !canBehavior;
+        if (canBehavior)
         {
-            latePlayerPos = playerPos;
-            if (HasAuditoryDetection())
-                OnAuditoryDectected(playerPos);
+            stateMachine?.Update();
+            LookAtTarget(isLookAtTarget, rotationSpeed);
+            navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
+            #region Listening Step
+            float step = 0.5f;
+            if (((Vector2)transform.position - playerPos).magnitude <= listenDist && (playerPos - latePlayerPos).magnitude >= step)
+            {
+                latePlayerPos = playerPos;
+                if (HasAuditoryDetection())
+                    OnAuditoryDectected(playerPos);
+            }
+            #endregion
         }
-        #endregion
     }
 
     protected override void LateUpdate()

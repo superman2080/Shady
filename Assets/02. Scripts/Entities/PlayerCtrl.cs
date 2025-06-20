@@ -78,8 +78,11 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     void FixedUpdate()
     {
-        KeyInput();
-        Move();
+        if (canBehavior)
+        {
+            KeyInput();
+            Move();
+        }
     }
 
     protected override void LateUpdate()

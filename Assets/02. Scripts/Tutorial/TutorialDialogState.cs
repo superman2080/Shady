@@ -5,9 +5,15 @@ public class TutorialDialogState : TutorialState
 {
     public List<DialogData> datas;
     private bool finishDialog = false;
+    private Entity[] entities;
 
     public override void Enter(TutorialController caster)
     {
+        entities = FindObjectsByType<Entity>(FindObjectsSortMode.InstanceID);
+        foreach (var entity in entities)
+        {
+            entity.canBehavior = false;
+        }
         UI.Instance.SetDialog(datas, () => {
             finishDialog = true;
         });
@@ -21,5 +27,9 @@ public class TutorialDialogState : TutorialState
 
     public override void Exit(TutorialController caster)
     {
+        foreach (var entity in entities)
+        {
+            entity.canBehavior = true;
+        }
     }
 }
