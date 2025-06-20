@@ -255,6 +255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 0}
+  canBehavior: 1
   navMesh: {fileID: 0}
   targetPos: {x: 0, y: 0}
   rotationSpeed: 150

@@ -106,6 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 0}
+  canBehavior: 1
   lightPrefab: {fileID: 1128636078612764217, guid: 0c265ae0eb6776142a173951625f55ef, type: 3}
   throwPower: 3
   retrieveDist: 2
