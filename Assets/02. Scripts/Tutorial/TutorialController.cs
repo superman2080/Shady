@@ -38,5 +38,9 @@ public class TutorialController : MonoBehaviour
             curTutorialState = state;
             curTutorialState.Enter(this);
         }
+        else
+        {
+            curTutorialState = null;
+        }
     }
 }

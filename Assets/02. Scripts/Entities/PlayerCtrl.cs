@@ -15,20 +15,21 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     private Coroutine throwCor;
     #endregion
 
-    [Header("Related to shadow")]
+    [Header("Related to shadow dash")]
     #region Shadow Attribute
     [HideInInspector] public AnimationCurve dashSpeed = AnimationCurve.Linear(0, 1, 1, 0);
     private TrailRenderer dashTrail;
     private Coroutine dashCor;
     private LineRenderer dashTrajectory;
-    #endregion
-
-    #region Shadow Dash Attribute
-    [Header("Related to shadow dash")]
     public float dashDistance;
     public float maxDashStamina;
     public float dashStamina;
     public float dashCost;
+    #endregion
+
+    [Header("Related to shadow")]
+    #region Shadow Dash Attribute
+    public bool isDiving;
     public float delayRecoverTime;
     public float recoverStamina;
     public float dashTime;
@@ -75,6 +76,10 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     }
 
+    void Update()
+    {
+        DiveShadow();
+    }
 
     void FixedUpdate()
     {
@@ -119,10 +124,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
                 Attack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
             }
         }
-        if (Input.GetKey(KeyCode.Space))
-        {
-            DiveShadow();
-        }
+        isDiving = Input.GetKey(KeyCode.Space);
     }
 
     private void Move()
@@ -137,16 +139,19 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 
     private void DiveShadow()
     {
-        diveTime = IsInShadow().isIn ? Mathf.Clamp(diveTime - Time.deltaTime, 0, maxDiveTime) : Mathf.Clamp(diveTime + Time.deltaTime, 0, maxDiveTime);
+        diveTime = isDiving && IsInShadow().isIn ? Mathf.Clamp(diveTime - Time.deltaTime, 0, maxDiveTime) : Mathf.Clamp(diveTime + Time.deltaTime, 0, maxDiveTime);
 
-        //if(diveTime > 0 && OutOfShadow().isOut)
-        //{
-        //    OutOfShadow().col.isTrigger = true;
-        //}
-        //if(diveTime <= 0 && OutOfShadow().isOut)
-        //{
-        //    OutOfShadow().col.isTrigger = false;
-        //}
+        if (isDiving && diveTime > 0 && IsInShadow().isIn)
+        {
+            IsInShadow().col.isTrigger = true;
+        }
+        if (!isDiving || diveTime <= 0)
+        {
+            foreach (var shadow in ShadowPool.Instance.GetChildShadowList())
+            {
+                shadow.col.isTrigger = false;
+            }
+        }
     }
 
     private IEnumerator StaminaCor()
