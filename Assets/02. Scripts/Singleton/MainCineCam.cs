@@ -35,6 +35,14 @@ public class MainCineCam: Singleton<MainCineCam>
     void Update()
     {
         stateMachine.Update();
+        if(targetTrList.Count <= 1)
+        {
+            stateMachine.ChangeStateImmediately(new CSingleLookAt());
+        }
+        else
+        {
+            stateMachine.ChangeStateImmediately(new CMultipleLookAt());
+        }
     }
 
     public void LookAt(Vector2 pos)

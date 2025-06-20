@@ -15,13 +15,9 @@ public class CSingleLookAt : IState<MainCineCam>
         {
             caster.LookAt(Vector2.zero);
         }
-        else if(caster.targetTrList.Count <= 1)
-        {
-            caster.LookAt(caster.targetTrList[0].position);
-        }
         else
         {
-            caster.stateMachine.ChangeStateImmediately(new CMultipleLookAt());
+            caster.LookAt(caster.targetTrList[0].position);
         }
     }
 
