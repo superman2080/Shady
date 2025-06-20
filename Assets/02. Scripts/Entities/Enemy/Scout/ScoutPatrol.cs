@@ -58,7 +58,6 @@ public class ScoutPatrol : IState<Enemy>
                 if (light.activatedTime > 0.1f)
                 {
                     caster.stateMachine.ChangeState(new Doubt(light.transform.position), 0.5f);
-                    Debug.LogError("Find new light!");
                 }
             }
         }

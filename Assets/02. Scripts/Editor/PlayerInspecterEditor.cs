@@ -9,8 +9,8 @@ public class PlayerInspecterEditor : Editor
     {
         var script = (PlayerCtrl)target;
 
-        EditorGUILayout.LabelField("Width Curve (0~1 range)");
         DrawDefaultInspector();
+        EditorGUILayout.LabelField("Width Curve (0~1 range)");
         script.dashSpeed = EditorGUILayout.CurveField("Dash Speed", script.dashSpeed, Color.red, new Rect(0, 0, 1, 1));
         EditorUtility.SetDirty(script);
     }
