@@ -78617,6 +78617,7 @@ GameObject:
   m_Component:
   - component: {fileID: 710965837}
   - component: {fileID: 710965838}
+  - component: {fileID: 710965839}
   m_Layer: 0
   m_Name: ShadowPool
   m_TagString: Untagged
@@ -78652,6 +78653,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shadowPrefab: {fileID: 7617683389148043810, guid: 69f86e9fb4444c74f84179fc7289400b, type: 3}
+--- !u!50 &710965839
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710965836}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &722776631
 GameObject:
   m_ObjectHideFlags: 0
@@ -114416,21 +114444,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 619352544162687216, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
-      propertyPath: m_BodyType
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2042774743658623087, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 7141129133002061291, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 41.6
+      value: 15.4
       objectReference: {fileID: 0}
     - target: {fileID: 7141129133002061291, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 38.3
+      value: 3.5
       objectReference: {fileID: 0}
     - target: {fileID: 7141129133002061291, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
       propertyPath: m_LocalPosition.z
