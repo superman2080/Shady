@@ -108,6 +108,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 0}
   canBehavior: 1
+  hpBar: {fileID: 0}
   throwPower: 10
   throwTime: 3
   retrieveDist: 2
@@ -117,6 +118,15 @@ MonoBehaviour:
     maxVal: 100
     recoverVal: 2
   lanternBar: {fileID: 0}
+  isDiving: 0
+  dashDistance: 10
+  dashCost: 20
+  dashTime: 0.3
+  dashValue:
+    val: 100
+    maxVal: 100
+    recoverVal: 3
+  dashBar: {fileID: 0}
   dashSpeed:
     serializedVersion: 2
     m_Curve:
@@ -150,15 +160,6 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  dashDistance: 10
-  dashCost: 20
-  dashTime: 0.3
-  dashValue:
-    val: 100
-    maxVal: 100
-    recoverVal: 3
-  dashBar: {fileID: 0}
-  isDiving: 0
 --- !u!58 &3173365839324866614
 CircleCollider2D:
   m_ObjectHideFlags: 0
