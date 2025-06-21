@@ -14,7 +14,7 @@ public class TutorialDialogState : TutorialState
         {
             entity.canBehavior = false;
         }
-        UI.Instance.dialogSystem.SetDialog(datas, () => {
+        InGameUI.Instance.dialogSystem.SetDialog(datas, () => {
             finishDialog = true;
         });
     }

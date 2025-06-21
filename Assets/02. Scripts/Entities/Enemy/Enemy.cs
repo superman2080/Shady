@@ -36,6 +36,7 @@ public abstract class Enemy : Entity, IAttackable
 
     #region IAttackable
 
+    private EnemyHUD hud;
     public Coroutine AttackTimerCor { get; protected set; } = null;
 
 
@@ -80,12 +81,29 @@ public abstract class Enemy : Entity, IAttackable
             }
             #endregion
         }
+        HUD();
+    }
+
+    private void HUD()
+    {
+        if (Util.IsVisibleFromCamera(Camera.main, transform) && InGameUI.Instance.hudPool.HasHUD(this) == false)
+            hud = InGameUI.Instance.hudPool.Get(this);
+        else if (Util.IsVisibleFromCamera(Camera.main, transform) == false && InGameUI.Instance.hudPool.HasHUD(this) == true)
+        {
+            InGameUI.Instance.hudPool.Return(hud);
+        }
     }
 
     protected override void LateUpdate()
     {
         base.LateUpdate();
         WeaponController.weaponStat.Update();
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if(hud != null)
+            InGameUI.Instance.hudPool.Return(hud);
     }
 
     public bool IsPlayerInSight(float range, float angle, int layer)
@@ -230,7 +248,7 @@ public abstract class Enemy : Entity, IAttackable
 
     protected bool HasAuditoryDetection()
     {
-        return GameMath.RollChanceByPercent(listenPercentage.Evaluate(1f - Vector2.Distance(transform.position, playerTr.transform.position) / listenDist));
+        return Util.RollChanceByPercent(listenPercentage.Evaluate(1f - Vector2.Distance(transform.position, playerTr.transform.position) / listenDist));
     }
 
     public abstract void OnEntityAttack(Entity caster, float amount);

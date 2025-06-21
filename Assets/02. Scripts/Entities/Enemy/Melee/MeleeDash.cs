@@ -32,7 +32,6 @@ public class MeleeDash : IState<Enemy>
         caster.isLookAtTarget = true;
         caster.navMesh.isStopped = false;
         (caster as Melee).SetDashTimer();
-        caster.rotationSpeed = 150f;
     }
 
     private float GetEaseOutT(float elapsedTime, float duration)

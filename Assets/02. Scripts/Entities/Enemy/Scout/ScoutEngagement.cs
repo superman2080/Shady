@@ -6,7 +6,7 @@ public class ScoutEngagement : IState<Enemy>
 
     public void Enter(Enemy caster)
     {
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 5);
+        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 8);
         targetPos = caster.RandomReachablePosition(10f);
         caster.navMesh.destination = targetPos;
         caster.isLookAtTarget = true;

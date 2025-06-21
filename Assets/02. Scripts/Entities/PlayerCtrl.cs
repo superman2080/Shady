@@ -15,7 +15,6 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     public float retrieveDist;
     [HideInInspector] public ShadowCaster lantern;
     public SliderValue lanternValue;
-    public StatBar lanternBar;
     private Coroutine throwCor;
     #endregion
 
@@ -30,7 +29,6 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     public float dashCost;
     public float dashTime;
     public SliderValue dashValue;
-    public StatBar dashBar;
     private TrailRenderer dashTrail;
     private Coroutine dashCor;
     private LineRenderer dashTrajectory;
@@ -82,7 +80,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     void Update()
     {
         DiveShadow();
-        SetStatValues();
+        UpdateStamina();
     }
 
     void FixedUpdate()
@@ -119,7 +117,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         {
             RaycastHit2D[] hits = Physics2D.RaycastAll(Camera.main.ScreenPointToRay(Input.mousePosition).origin,
                 Camera.main.ScreenPointToRay(Input.mousePosition).direction, Mathf.Infinity);
-            var hit = hits.Select(h => h.collider.GetComponent<ITouchable<MonoBehaviour>>()).Where(h => h != null).FirstOrDefault();
+            var hit = hits.Select(h => h.collider.GetComponent<ITouchable>()).Where(h => h != null).FirstOrDefault();
             if (hit != default && Vector3.Magnitude((hit as MonoBehaviour).transform.position - transform.position) <= retrieveDist)
             {
                 hit.HasTouched(this);
@@ -162,16 +160,13 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         }
     }
 
-    private void SetStatValues()
+    private void UpdateStamina()
     {
         dashValue.val = Mathf.Clamp(dashValue.val + dashValue.recoverVal * Time.deltaTime, 0, dashValue.maxVal);
         if(lantern != null)
         {
             lanternValue.val = Mathf.Clamp(lanternValue.val + lanternValue.recoverVal * Time.deltaTime, 0, lanternValue.maxVal);
         }
-        dashBar.SetStatValue(dashValue);
-        lanternBar.SetStatValue(lanternValue);
-        hpBar.SetStatValue(new SliderValue(HP, entityStat.Get(EntityStatType.MAX_HP), 0));
     }
 
     private void ThrowLight(float tP, float time)
@@ -191,7 +186,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         // Start casting
 
 
-        UI.Instance.Fade(false, Color.black, castingTime, 0.4f);
+        InGameUI.Instance.Fade(false, Color.black, castingTime, 0.4f);
         for (float eT = 0; eT <= castingTime; eT += Time.deltaTime) 
         {
             Time.timeScale = Mathf.Lerp(1f, 0.1f, eT / castingTime);
@@ -202,12 +197,13 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         Vector2 moveTo = Vector2.zero;
         List<IDamagable> damagables = new List<IDamagable>();
         Vector2 targetPos = Vector2.zero;
-        bool isShadowDash = false;
+        var startShadow = IsInShadow().col;
         dashTrail.enabled = true;
         dashTrajectory.enabled = true;
 
         while (true)
         {
+            entityStat.Multiply(EntityStatType.MOVE_SPEED, 0);
             yield return null;
             // Draw dash trajectory
             moveTo = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -224,7 +220,8 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
             {
                 dashTrajectory.enabled = false;
                 RaycastHit2D[] hits = Physics2D.CircleCastAll(origin, (col as CircleCollider2D).radius, (moveTo - origin).normalized, Vector2.Distance(origin, moveTo),
-                    1 << LayerMask.NameToLayer("Wall") | 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile") | 1 << LayerMask.NameToLayer("Shadow"));
+                    1 << LayerMask.NameToLayer("Wall") | 1 << LayerMask.NameToLayer("Tile") | 1 << LayerMask.NameToLayer("ScanTile") 
+                    | 1 << LayerMask.NameToLayer("Shadow") | 1 << LayerMask.NameToLayer("Drop") | 1 << LayerMask.NameToLayer("Enemy"));
                 targetPos = moveTo;
                 if (hits.Length > 0)
                 {
@@ -232,16 +229,13 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
                     {
                         if (hits[i].collider.TryGetComponent(out IDamagable damagable))
                         {
+                            Debug.LogError(hits[i].collider.name);
                             damagables.Add(damagable);
                         }
-                        else if (hits[i].collider.gameObject.layer != LayerMask.NameToLayer("Shadow"))
+                        else if (hits[i].collider.gameObject.layer != LayerMask.NameToLayer("Shadow") && hits[i].collider.gameObject.layer != LayerMask.NameToLayer("Enemy"))
                         {
                             targetPos = GameMath.GetOffsetPosition(origin, hits[i].point, (col as CircleCollider2D).radius);
                             break;
-                        }
-                        else if (i == hits.Length - 1 && hits[i].collider.gameObject.layer == LayerMask.NameToLayer("Shadow"))
-                        {
-                            isShadowDash = true;
                         }
                     } 
                 }
@@ -250,7 +244,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         }
         Time.timeScale = 1;
 
-        UI.Instance.Fade(true, Color.black, castingTime, 0.4f);
+        InGameUI.Instance.Fade(true, Color.black, castingTime, 0.4f);
         dashValue.val -= dashCost;
 
         for (float eT = 0; eT <= dashTime; eT += Time.deltaTime) 
@@ -259,7 +253,7 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
             yield return null;
         }
 
-        if(isShadowDash)
+        if(startShadow != null && IsInShadow().col != null && startShadow != IsInShadow().col)
         {
             foreach (var obj in damagables)
             {
@@ -279,9 +273,16 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
     IEnumerator ThrowLightCor(float tP, float time)
     {
         float eT = 0;
-        while (!Input.GetMouseButtonUp(0))
+        
+        while (true)
         {
-            eT += Time.deltaTime;
+            if (Input.GetMouseButtonUp(0))
+                break;
+            if (Input.GetMouseButton(0))
+            {
+                Debug.LogError("Down");
+                eT += Time.deltaTime;
+            }
             yield return null;
         }
         float power = eT > time ? tP : Mathf.Lerp(0, tP, eT / time);

@@ -13,7 +13,7 @@ public class MeleeEngagement : IState<Enemy>
         caster.isLookAtTarget = true;
         caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
         caster.spriteRenderer.color = Color.red;
-        caster.rotationSpeed = 150f;
+        caster.rotationSpeed = 540f;
     }
 
     public void Execute(Enemy caster)

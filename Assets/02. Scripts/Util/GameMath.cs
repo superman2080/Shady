@@ -14,11 +14,6 @@ public class GameMath
     {
         return (angle % 360f + 360f) % 360f;
     }
-    public static bool RollChanceByPercent(float percent)
-    {
-        percent = Mathf.Clamp01(percent);
-        return Random.value <= percent;
-    }
 
     public static Vector2 GetOffsetPosition(Vector2 origin, Vector2 moveTo, float dist)
     {
@@ -43,9 +38,5 @@ public class GameMath
         return Vector2.Angle(tr.right.normalized, target) <= threshold;
     }
 
-    public static bool IsVisibleFromCamera(Camera cam, Transform target)
-    {
-        Vector3 viewPos = cam.WorldToViewportPoint(target.position);
-        return viewPos.z > 0 && viewPos.x >= 0 && viewPos.x <= 1 && viewPos.y >= 0 && viewPos.y <= 1;
-    }
+
 }

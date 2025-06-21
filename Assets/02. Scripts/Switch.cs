@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Switch : MonoBehaviour, ITouchable<MonoBehaviour>
+public class Switch : MonoBehaviour, ITouchable
 {
     public List<ISwitchable> clients = new List<ISwitchable>();
     public bool IsActivated { get; private set; } = false;
