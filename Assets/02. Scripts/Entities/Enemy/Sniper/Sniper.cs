@@ -46,6 +46,9 @@ public class Sniper : Enemy, IAttackable
 
     protected override void OnTakeDamage(IAttackable caster, float amount)
     {
+        if (stateMachine.CompareState(stateMachine.State, DefaultState) ||
+       stateMachine.CompareState(stateMachine.State, "Doubt"))
+            stateMachine.ChangeStateImmediately(AttackState);
     }
 
     protected override void OnDrawGizmos()

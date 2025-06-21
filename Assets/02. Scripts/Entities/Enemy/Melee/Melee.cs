@@ -28,6 +28,9 @@ public class Melee : Enemy
 
     protected override void OnTakeDamage(IAttackable caster, float amount)
     {
+        if (stateMachine.CompareState(stateMachine.State, DefaultState) ||
+            stateMachine.CompareState(stateMachine.State, "Doubt"))
+            stateMachine.ChangeStateImmediately(AttackState);
     }
 
     protected override void OnEntityHeal(Entity caster, float amount)
@@ -40,7 +43,7 @@ public class Melee : Enemy
 
     protected override void OnAuditoryDectected(Vector2 detectPos)
     {
-        if(stateMachine.State?.GetType().Name == DefaultState.GetType().Name)
+        if(stateMachine.CompareState(stateMachine.State, DefaultState))
         {
             Vector2 origin = transform.position;
             Vector2 targetPos = GameMath.GetOffsetPosition(origin, detectPos, 2);

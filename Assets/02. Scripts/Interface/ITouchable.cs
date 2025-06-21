@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public interface ITouchable<T> where T : MonoBehaviour
+public interface ITouchable
 {
     void HasTouched(PlayerCtrl player);
 }

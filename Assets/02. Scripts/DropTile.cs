@@ -31,7 +31,6 @@ public class DropTile : MonoBehaviour
         {
             if (!shadows[i].gameObject.activeSelf)
             {
-                // 대응하는 콜라이더 제거
                 if (i < ignores.Count)
                 {
                     Destroy(ignores[i]);
@@ -43,6 +42,8 @@ public class DropTile : MonoBehaviour
         }
     }
 
+
+    // Equalizing ignore collier count with shadow count
     private void EnsureColliderCountMatches()
     {
         while (ignores.Count < shadows.Count)

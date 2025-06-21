@@ -1,20 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 
-
-
-
-public delegate void DialogDelegate(object sender);
-
-public class UI : Singleton<UI>
+public class InGameUI : Singleton<InGameUI>
 {
+    public EnemyHUDPool hudPool;
     [SerializeField] private Image fadeImage;
     private Coroutine fadeCor;
     public DialogSystem dialogSystem;
-
-
 
     public void Fade(bool fadeOut, Color color, float fadeTime, float maxFadeAlpha)
     {
@@ -28,7 +23,7 @@ public class UI : Singleton<UI>
 
     private IEnumerator FadeCor(bool fadeIn, Color color, float fadeTime, float maxFadeAlpha)
     {
-        float a = fadeIn ? maxFadeAlpha : 0;
+        float a = fadeIn ? Mathf.Clamp01(maxFadeAlpha) : 0;
         Color c = new Color(color.r, color.g, color.b, a);
         fadeImage.color = c;
 
@@ -38,7 +33,7 @@ public class UI : Singleton<UI>
             c.a = Mathf.Lerp(fadeIn ? maxFadeAlpha : 0, fadeIn ? 0 : maxFadeAlpha,  eT / fadeTime);
             yield return null;
         }
-        a = fadeIn ? 0 : maxFadeAlpha;
+        a = fadeIn ? 0 : Mathf.Clamp01(maxFadeAlpha);
         c.a = a;
         fadeImage.color = c;
         fadeCor = null;

@@ -3,23 +3,16 @@ using UnityEngine.UI;
 
 public class EnemyHUD : MonoBehaviour
 {
-    public Transform hudTr;
-    public Slider hpBar;
-    public Image doubtMark;
-    private Entity entity;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        entity = gameObject.GetComponent<Entity>();
-        doubtMark.gameObject.SetActive(false);
-    }
+    public Enemy owner;
+    public StatBar hpBar;
 
     // Update is called once per frame
     void Update()
     {
-        hudTr.eulerAngles = Vector3.zero;
-        hudTr.transform.position = entity.transform.position;
-        hpBar.value = entity.HP / entity.entityStat.Get(EntityStatType.MAX_HP);
+        if(Util.IsVisibleFromCamera(Camera.main, owner.transform))
+        {
+            transform.position = Camera.main.WorldToScreenPoint(owner.transform.position);
+            hpBar.SetStatValue(new SliderValue(owner.HP, owner.entityStat.Get(EntityStatType.MAX_HP), 0));
+        }
     }
 }

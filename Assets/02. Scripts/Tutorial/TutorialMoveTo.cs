@@ -10,7 +10,7 @@ public class TutorialMoveTo : TutorialState
 
     public override void Enter(TutorialController caster)
     {
-        arrow = Instantiate(arrowPrefab, UI.Instance.transform).GetComponent<RectTransform>();
+        arrow = Instantiate(arrowPrefab, InGameUI.Instance.transform).GetComponent<RectTransform>();
     }
 
     public override void Execute(TutorialController caster)

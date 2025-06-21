@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 using System;
 using UnityEngine.EventSystems;
 
-public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, ITouchable<MonoBehaviour>
+public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, ITouchable
 {
     [Header("Light Attribute")]
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
