@@ -108,15 +108,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spriteRenderer: {fileID: 0}
   canBehavior: 1
-  hpBar: {fileID: 0}
   throwPower: 10
   throwTime: 3
-  retrieveDist: 2
+  retrieveDist: 20
   lantern: {fileID: 0}
   lanternValue:
     val: 100
     maxVal: 100
-    recoverVal: 2
+    recoverVal: 20
   isDiving: 0
   dashDistance: 10
   dashCost: 20

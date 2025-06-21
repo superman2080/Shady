@@ -7,7 +7,6 @@ using System;
 
 public class PlayerCtrl : Entity, ICameraLookable, IAttackable
 {
-    public StatBar hpBar;
     [Header("Related to light")]
     #region Light Attribute
     [Min(1)] public float throwPower;
