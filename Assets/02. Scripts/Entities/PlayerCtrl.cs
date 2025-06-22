@@ -275,24 +275,25 @@ public class PlayerCtrl : Entity, ICameraLookable, IAttackable
         
         while (true)
         {
-            if (Input.GetMouseButtonUp(0))
-                break;
             if (Input.GetMouseButton(0))
             {
-                Debug.LogError("Down");
                 eT += Time.deltaTime;
             }
+            if (Input.GetMouseButtonUp(0))
+                break;
             yield return null;
         }
-        float power = eT > time ? tP : Mathf.Lerp(0, tP, eT / time);
+        float power = eT > time ? tP : Mathf.Lerp(0.1f, tP, eT / time);
 
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 dir = (mousePos - (Vector2)transform.position).normalized;
         lantern.gameObject.SetActive(true);
         lantern.transform.SetParent(null);
-        Rigidbody2D obj = lantern.gameObject.GetComponent<Rigidbody2D>();
-        obj.linearDamping = 1f;
-        obj.AddForce(dir * power, ForceMode2D.Impulse);
+        Rigidbody2D lanternRb = lantern.gameObject.GetComponent<Rigidbody2D>();
+        lanternRb.linearVelocity = Vector2.zero; 
+        lanternRb.angularVelocity = 0f;    
+        lanternRb.linearDamping = 1f;
+        lanternRb.AddForce(dir * power, ForceMode2D.Impulse);
         lantern = null;
         throwCor = null;
     }

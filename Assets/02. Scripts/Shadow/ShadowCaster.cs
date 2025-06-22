@@ -364,6 +364,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
     {
         player.lantern = this;
         transform.SetParent(player.transform);
+        transform.localPosition = Vector2.zero;
         StopCoroutine(staminaCor);
         staminaCor = null;
         gameObject.SetActive(false);
