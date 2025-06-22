@@ -20,6 +20,8 @@ public class Hammer : IWeapon
 
     public void Casting(IAttackable user)
     {
+        if (user == null)
+            return;
         var transform = (user as MonoBehaviour).transform;
         Vector2 origin = transform.position;
         Vector2 dir = transform.right;

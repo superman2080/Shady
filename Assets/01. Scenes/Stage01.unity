@@ -193,6 +193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffdba827381db6240b6844c31fcaaf5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveTime: 0.5
   focusTime: 3
   targetTr: {fileID: 377351080}
 --- !u!4 &377351080
@@ -101562,7 +101563,7 @@ GameObject:
   - component: {fileID: 1263517456}
   - component: {fileID: 1263517457}
   m_Layer: 0
-  m_Name: Background
+  m_Name: NavmeshCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -101629,7 +101630,7 @@ SpriteRenderer:
   m_SortingLayer: -2
   m_SortingOrder: 0
   m_Sprite: {fileID: 0}
-  m_Color: {r: 0, g: 0.3137255, b: 0, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -102507,6 +102508,10 @@ PrefabInstance:
     - target: {fileID: 1984979079287535497, guid: bb4310f91588ac1429ce057bdf8a02ad, type: 3}
       propertyPath: m_Layer
       value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 3606340759299424187, guid: bb4310f91588ac1429ce057bdf8a02ad, type: 3}
+      propertyPath: m_ColliderPaths.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3698827144304801087, guid: bb4310f91588ac1429ce057bdf8a02ad, type: 3}
       propertyPath: m_LocalPosition.x
