@@ -2,14 +2,14 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 
-public class CMultipleLookAt : IState<MainCineCam>
+public class CMultipleLookAt : StateBase<MainCineCam>
 {
 
-    public void Enter(MainCineCam caster)
+    public override void Enter(MainCineCam caster)
     {
     }
 
-    public void Execute(MainCineCam caster)
+    public override void Execute(MainCineCam caster)
     {
         List<Transform> tL = caster.targetTrList;
 
@@ -33,7 +33,7 @@ public class CMultipleLookAt : IState<MainCineCam>
 
         caster.SetOrthoSize(Mathf.Max(requiredOrthoSize + 5f, caster.minOrthoSize));
     }
-    public void Exit(MainCineCam caster)
+    public override void Exit(MainCineCam caster)
     {
     }
 }

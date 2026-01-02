@@ -1,7 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using PlayerNameSpace;
 
 public enum WeaponStatType
 {
@@ -9,37 +9,158 @@ public enum WeaponStatType
     DAMAGE,
     ATTACK_DISTANCE,
 }
-
-public enum EntityStatType
+public enum DefaultStatType
 {
     MAX_HP,
+    HP_REGEN,
     MOVE_SPEED,
 }
 
-public abstract class Stat<T> where T: Enum
+public enum PlayerStatType
+{
+    DASH_SPEED,
+    MAX_LAMP_COST,
+    DASH_STAMINA,
+    DASH_COST,
+}
+
+[Serializable]
+public class Resource
+{
+    [SerializeField] private ClampedFloat source = new ClampedFloat(100f);
+    [SerializeField] private float regenPerSecond;
+    [SerializeField, Min(0.01f)] private float regenTick = 0.5f;
+    public bool disableRegen = false;
+
+    private float tickDelta;
+    private bool isInitialized;
+
+    public float MaxValue
+    {
+        get => source.MaxValue;
+        set => source.MaxValue = value;
+    }
+
+    public float CurrentValue
+    {
+        get => source.CurrentValue;
+        set => source.CurrentValue = value;
+    }
+
+    public float RegenPerSecond
+    {
+        get => regenPerSecond;
+        set => regenPerSecond = value;
+    }
+
+    public float RegenTick
+    {
+        get => regenTick;
+        set => regenTick = Mathf.Max(0.01f, value);
+    }
+
+    public float Ratio => source.Ratio;
+    public bool IsEmpty => source.IsEmpty;
+    public bool IsFull => source.IsFull;
+
+    public event Action<float, float> OnValueChanged;
+    public event Action OnDepleted;
+    public event Action OnFilled;
+
+    public Resource() : this(100f, 0f) { }
+
+    public Resource(float maxValue, float regenPerSecond, float regenTick = 0.5f, float? initialValue = null)
+    {
+        source = new ClampedFloat(maxValue, initialValue);
+        this.regenPerSecond = regenPerSecond;
+        this.regenTick = Mathf.Max(0.01f, regenTick);
+        tickDelta = 0f;
+
+        BindEvents();
+    }
+
+    public void Initialize()
+    {
+        if (isInitialized) return;
+
+        BindEvents();
+        isInitialized = true;
+    }
+
+    private void BindEvents()
+    {
+        source.OnValueChanged += (current, max) => OnValueChanged?.Invoke(current, max);
+        source.OnDepleted += () => OnDepleted?.Invoke();
+        source.OnFilled += () => OnFilled?.Invoke();
+    }
+
+    public void Add(float amount) => source.Add(amount);
+
+    public void Subtract(float amount) => source.Subtract(amount);
+
+    public bool TryConsume(float amount) => source.TryConsume(amount);
+
+    public void SetToMax() => source.SetToMax();
+
+    public void SetToZero() => source.SetToZero();
+
+    public void Tick(float deltaTime)
+    {
+        if (IsFull || regenPerSecond <= 0f || disableRegen == true) return;
+
+        tickDelta += deltaTime;
+
+        if (tickDelta < regenTick) return;
+
+        float regenAmount = regenPerSecond * regenTick;
+        source.Add(regenAmount);
+        tickDelta -= regenTick;
+    }
+
+    public void OnMaxValueChanged(float oldMax, float newMax, bool keepRatio = false)
+    {
+        if (keepRatio && oldMax > 0f)
+        {
+            float ratio = source.CurrentValue / oldMax;
+            source.MaxValue = newMax;
+            source.CurrentValue = newMax * ratio;
+        }
+        else
+        {
+            float diff = newMax - oldMax;
+            source.MaxValue = newMax;
+
+            if (diff > 0f)
+            {
+                source.CurrentValue += diff;
+            }
+        }
+    }
+
+    public void ResetTickDelta() => tickDelta = 0f;
+
+    public static implicit operator float(Resource self) => self.CurrentValue;
+}
+public abstract class Stat<T> where T : Enum
 {
     public Dictionary<T, float> defaultStat = new Dictionary<T, float>();
     public Dictionary<T, float> addValue = new Dictionary<T, float>();
     public Dictionary<T, float> multipleValue = new Dictionary<T, float>();
     public Dictionary<T, float> currentValue = new Dictionary<T, float>();
-
-    public void Update()
+    public virtual void Update()
     {
         UpdateStat();
         InitStat();
     }
-
     public void InitStat()
     {
         T[] statTypes = (T[])Enum.GetValues(typeof(T));
-
         foreach (var stat in statTypes)
         {
             addValue[stat] = 0;
             multipleValue[stat] = 1;
         }
     }
-
     public void UpdateStat()
     {
         T[] statTypes = (T[])Enum.GetValues(typeof(T));
@@ -48,81 +169,97 @@ public abstract class Stat<T> where T: Enum
             currentValue[type] = (defaultStat[type] + addValue[type]) * multipleValue[type];
         }
     }
-
     public void SetDefault(T type, float defaultVal)
     {
         defaultStat[type] = defaultVal;
         Update();
     }
-
     public void Add(T type, float addition)
     {
         addValue[type] += addition;
     }
-
     public void Multiply(T type, float multiplier)
     {
         multipleValue[type] *= multiplier;
     }
-
     public float Get(T type)
     {
         return currentValue[type];
     }
 }
 
-public class EntityStat: Stat<EntityStatType>
+public class DefaultStat : Stat<DefaultStatType>
 {
-    //public Dictionary<EntityStatType, float> defaultStat = new Dictionary<EntityStatType, float>()
-    //    {
-    //        [EntityStatType.MAX_HP] = 100f,
-    //        [EntityStatType.MOVE_SPEED] = 1f,
-    //    };
+    public Resource HP;
 
-    //public Dictionary<EntityStatType, float> currentValue = new Dictionary<EntityStatType, float>()
-    //    {
-    //        [EntityStatType.MAX_HP] = 100f,
-    //        [EntityStatType.MOVE_SPEED] = 1f,
-    //    };
-
-    public EntityStat()
+    public DefaultStat(float maxHP, float hpRegen,float moveSpeed)
     {
-        defaultStat = new Dictionary<EntityStatType, float>()
+        defaultStat = new Dictionary<DefaultStatType, float>()
         {
-            [EntityStatType.MAX_HP] = 100f,
-            [EntityStatType.MOVE_SPEED] = 1f,
+            [DefaultStatType.MAX_HP] = maxHP,
+            [DefaultStatType.HP_REGEN] = hpRegen,
+            [DefaultStatType.MOVE_SPEED] = moveSpeed,
         };
-
-        currentValue = new Dictionary<EntityStatType, float>()
-        {
-            [EntityStatType.MAX_HP] = 100f,
-            [EntityStatType.MOVE_SPEED] = 1f,
-        };
-
+        currentValue = new Dictionary<DefaultStatType, float>(defaultStat);
         InitStat();
         UpdateStat();
+        HP = new Resource(maxHP, hpRegen);
+    }
+
+    public DefaultStat() : this(100, 0, 1) { }
+
+    public override void Update()
+    {
+        base.Update();
+        HP.Tick(Time.deltaTime);
     }
 }
-
-public class WeaponStat: Stat<WeaponStatType>
+public class AttackStat : Stat<WeaponStatType>
 {
-    public WeaponStat()
+    public AttackStat(float dist, float speed, float damage)
     {
         defaultStat = new Dictionary<WeaponStatType, float>()
         {
-            [WeaponStatType.ATTACK_DISTANCE] = 2f,
-            [WeaponStatType.ATTACK_SPEED] = 1f,
-            [WeaponStatType.DAMAGE] = 25f,
+            [WeaponStatType.ATTACK_DISTANCE] = dist,
+            [WeaponStatType.ATTACK_SPEED] = speed,
+            [WeaponStatType.DAMAGE] = damage,
         };
-
-        currentValue = new Dictionary<WeaponStatType, float>()
-        {
-            [WeaponStatType.ATTACK_DISTANCE] = 2f,
-            [WeaponStatType.ATTACK_SPEED] = 1f,
-            [WeaponStatType.DAMAGE] = 25f,
-        };
-
+        currentValue = new Dictionary<WeaponStatType, float>(defaultStat);
         InitStat();
         UpdateStat();
     }
+    public AttackStat(): this(2, 1, 25) { }
+}
+
+public class PlayerStat: Stat<PlayerStatType>
+{
+    public Resource dashStamina;
+    public Resource lampStamina;
+
+    public PlayerStat(float dashSpeed, float maxDashStamina, float maxLampStamina, float dashStaminaRegen, float lampStaminaRegen, float dashCost)
+    {
+        defaultStat = new Dictionary<PlayerStatType, float>()
+        {
+            [PlayerStatType.DASH_SPEED] = dashSpeed,
+            [PlayerStatType.MAX_LAMP_COST] = maxDashStamina,
+            [PlayerStatType.DASH_STAMINA] = maxLampStamina,
+            [PlayerStatType.DASH_COST] = dashCost,
+        };
+        currentValue = new Dictionary<PlayerStatType, float>(defaultStat);
+
+        InitStat();
+        UpdateStat();
+
+        dashStamina = new Resource(maxDashStamina, dashStaminaRegen);
+        lampStamina = new Resource(maxLampStamina, lampStaminaRegen);
+    }
+
+    public override void Update()
+    {
+        base.Update();
+        dashStamina.Tick(Time.deltaTime);
+        lampStamina.Tick(Time.deltaTime);
+    }
+
+    public PlayerStat() : this(7f, 100, 100, 10, 10, 10) { }
 }

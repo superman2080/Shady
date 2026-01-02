@@ -1,21 +1,21 @@
 using UnityEngine;
 
-public class ScoutEngagement : IState<Enemy>
+public class ScoutEngagement : StateBase<Enemy>
 {
     private Vector2 targetPos;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 8);
+        caster.Stat.SetDefault(DefaultStatType.MOVE_SPEED, 8);
         targetPos = caster.RandomReachablePosition(10f);
         caster.navMesh.destination = targetPos;
         caster.isLookAtTarget = true;
         caster.targetPos = targetPos;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
-        caster.Attack(caster, caster.WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+        caster.Attack(caster, caster.WeaponStat.Get(WeaponStatType.DAMAGE));
         if (caster.HasReachedDestination(targetPos))
         {
             targetPos = caster.RandomReachablePosition(10f);
@@ -24,7 +24,7 @@ public class ScoutEngagement : IState<Enemy>
         }
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
     }
 }

@@ -1,13 +1,14 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using PlayerNameSpace;
 
-public class Switch : MonoBehaviour, ITouchable
+public class Switch : MonoBehaviour, IInteractable
 {
     public List<ISwitchable> clients = new List<ISwitchable>();
     public bool IsActivated { get; private set; } = false;
 
-    public void HasTouched(PlayerCtrl player)
+    public void HasTouched(Player player)
     {
         Toggle();
     }

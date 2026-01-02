@@ -1,25 +1,25 @@
 using UnityEngine;
 
-public class MeleeEngagement : IState<Enemy>
+public class MeleeEngagement : StateBase<Enemy>
 {
     public float TransitionTime { get; set; } = 0.5f;
     private const float dashDist = 5;
     private Vector2 playerPos;
     private Vector2 origin;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
         caster.navMesh.isStopped = false;
         caster.isLookAtTarget = true;
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
+        caster.Stat.SetDefault(DefaultStatType.MOVE_SPEED, 2f);
         caster.spriteRenderer.color = Color.red;
         caster.rotationSpeed = 540f;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         if (caster.playerTr == null)
-            caster.stateMachine.ChangeStateImmediately(new MeleePatrol());
+            caster.stateMachine.ChangeState(new MeleePatrol());
 
         origin = caster.transform.position;
         playerPos = caster.playerTr.transform.position;
@@ -28,16 +28,16 @@ public class MeleeEngagement : IState<Enemy>
 
         if ((origin - playerPos).magnitude > dashDist && (caster as Melee).CanDash)
         {
-            caster.stateMachine.ChangeState(new MeleeDash(), 0.25f);
+            caster.stateMachine.ChangeState(new MeleeDash());
         }
 
-        if ((origin - playerPos).magnitude <= caster.WeaponController.weaponStat.Get(WeaponStatType.ATTACK_DISTANCE) && caster.WeaponController.CanAttack)
+        if ((origin - playerPos).magnitude <= caster.WeaponStat.Get(WeaponStatType.ATTACK_DISTANCE) && caster.WeaponController.CanAttack)
         {
-            caster.stateMachine.ChangeStateImmediately(new MeleeBasicAttack());
+            caster.stateMachine.ChangeState(new MeleeBasicAttack());
         }
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         caster.navMesh.isStopped = true;
         caster.isLookAtTarget = false;

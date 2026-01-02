@@ -1,17 +1,16 @@
-#nullable enable
-#pragma warning disable CS8602
-#pragma warning disable CS8625
-#pragma warning disable CS8618
 using System.Collections.Generic;
-using System.Collections;
+using PlayerNameSpace;
 using UnityEngine;
 using System.Linq;
 using UnityEngine.AI;
+#nullable enable
+
+public delegate void OnAuditoryDetected(Vector2 position);
 
 public abstract class Enemy : Entity, IAttackable
 {
-    [HideInInspector] public StateMachine<Enemy>? stateMachine;
-    [HideInInspector] public NavMeshAgent? navMesh;
+    [HideInInspector] public StateMachine<Enemy> stateMachine;
+    [HideInInspector] public NavMeshAgent navMesh;
     [HideInInspector] public Vector2 targetPos;
 
     //[Header("Related to suspicion state")]
@@ -28,21 +27,27 @@ public abstract class Enemy : Entity, IAttackable
     public AnimationCurve listenPercentage = AnimationCurve.Linear(0, 1, 1, 0);
     [Min(0.5f)] public float listenDist;
     private Vector2 latePlayerPos;
+    public event OnAuditoryDetected OnAuditoryDetected;
     #endregion
 
-    public abstract IState<Enemy> DefaultState { get; }
-    public abstract IState<Enemy> AttackState { get; }
+    public abstract StateBase<Enemy> DefaultState { get; }
+    public abstract StateBase<Enemy> AttackState { get; }
 
 
     #region IAttackable
 
     private EnemyHUD hud;
+
+    public event OnAttack OnAttackEvent;
+
     public Coroutine AttackTimerCor { get; protected set; } = null;
 
 
     public WeaponCtrl WeaponController { get; protected set; }
 
     [SerializeField] public LayerMask AttackLayer { get => 1 << LayerMask.NameToLayer("Entity") | 1 << LayerMask.NameToLayer("Player"); }
+
+    public AttackStat WeaponStat => throw new System.NotImplementedException();
     #endregion
 
 
@@ -50,7 +55,7 @@ public abstract class Enemy : Entity, IAttackable
     protected override void Start()
     {
         base.Start();
-        playerTr = FindAnyObjectByType<PlayerCtrl>().transform;
+        playerTr = FindAnyObjectByType<Player>().transform;
         latePlayerPos = playerTr.transform.position;
 
         navMesh = gameObject.GetComponent<NavMeshAgent>();
@@ -70,14 +75,14 @@ public abstract class Enemy : Entity, IAttackable
         {
             stateMachine?.Update();
             LookAtTarget(isLookAtTarget, rotationSpeed);
-            navMesh.speed = entityStat.Get(EntityStatType.MOVE_SPEED);
+            navMesh.speed = Stat.Get(DefaultStatType.MOVE_SPEED);
             #region Listening Step
             float step = 0.5f;
             if (((Vector2)transform.position - playerPos).magnitude <= listenDist && (playerPos - latePlayerPos).magnitude >= step)
             {
                 latePlayerPos = playerPos;
                 if (HasAuditoryDetection())
-                    OnAuditoryDectected(playerPos);
+                    OnAuditoryDetected?.Invoke(playerPos);
             }
             #endregion
         }
@@ -97,7 +102,7 @@ public abstract class Enemy : Entity, IAttackable
     protected override void LateUpdate()
     {
         base.LateUpdate();
-        WeaponController.weaponStat.Update();
+        WeaponStat.Update();
     }
 
     protected virtual void OnDestroy()
@@ -111,7 +116,7 @@ public abstract class Enemy : Entity, IAttackable
         List<GameObject>? list = FieldOfView(range, angle / 2, layer);
         if (list == null)
             return false;
-        return list.Exists(obj => obj.TryGetComponent(out PlayerCtrl player));
+        return list.Exists(obj => obj.TryGetComponent(out Player player));
     }
 
     protected virtual void OnDrawGizmos()
@@ -241,18 +246,13 @@ public abstract class Enemy : Entity, IAttackable
     {
         if (WeaponController.CanAttack)
         {
-            WeaponController.UsingWeapon();
-            OnEntityAttack(this, WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+            if (!WeaponController.TryUsingWeapon())
+                return;
+            OnAttackEvent?.Invoke(this, WeaponStat.Get(WeaponStatType.DAMAGE));
         }
     }
 
-    protected bool HasAuditoryDetection()
-    {
-        return Util.RollChanceByPercent(listenPercentage.Evaluate(1f - Vector2.Distance(transform.position, playerTr.transform.position) / listenDist));
-    }
-
-    public abstract void OnEntityAttack(Entity caster, float amount);
-
-    protected abstract void OnAuditoryDectected(Vector2 detectPos);
-
+    protected bool HasAuditoryDetection() => Util.RollChanceByPercent(listenPercentage.Evaluate(1f - Vector2.Distance(transform.position, playerTr.transform.position) / listenDist));
 }
+
+#nullable disable

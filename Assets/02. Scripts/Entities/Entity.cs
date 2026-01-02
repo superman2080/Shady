@@ -1,45 +1,73 @@
-#nullable enable
-#pragma warning disable CS8618
-using UnityEngine;
-using System.Linq;
+using System;
 using System.Collections.Generic;
-using System.Collections;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
+
+public delegate void OnEntityDiedEventHandler(IAttackable caster);
+public delegate void OnEntityTakeDamageEventHandler(IAttackable caster, float amount);
+public delegate void OnEntityHealEventHandler(Entity entity, float amount);
 
 [RequireComponent(typeof(Collider2D), typeof(Rigidbody2D))]
 public abstract class Entity : MonoBehaviour, IDamagable
 {
+    public bool canBehavior = true;
+    #region Default components(Rigidbody2D, SpriteRenderer, Collider2D...)
     public Rigidbody2D rb2d { get; private set; }
     [HideInInspector] public SpriteRenderer spriteRenderer;
-    public EntityStat entityStat;
-    public bool canBehavior = true;
     protected Collider2D col;
-    [SerializeField] public float HP { get; protected set; }
+    #endregion
+
+    #region Stat
+    public StatData entityStatData;
+    public DefaultStat Stat { get; set; }
+    public Resource HP => Stat.HP;
+    #endregion
+
+    #region Events
+    // 누구에 의해 죽었는지
+    public event Action<IAttackable> OnEntityDied;
+    // 대미지 준 객체, 대미지 Amount
+    public event Action<IAttackable, float> OnTakeDamage;
+
+    public event OnEntityHealEventHandler OnEntityHeal;
+
+    #endregion
+
+    private StatusEffectHandler effectHandler;
+    public StatusEffectHandler EffectHandler => effectHandler;
+
+    protected virtual void Awake()
+    {
+        entityStatData?.ApplyTo(this);
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     protected virtual void Start()
     {
+        effectHandler = new StatusEffectHandler(this);
         col = gameObject.GetComponent<Collider2D>();
         rb2d = gameObject.GetComponent<Rigidbody2D>();
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-        entityStat = new EntityStat();
-        entityStat.InitStat();
-        HP = entityStat.Get(EntityStatType.MAX_HP);
+        
+        Stat.InitStat();
     }
 
     protected virtual void LateUpdate()
     {
-        entityStat.Update();
+        Stat.Update();
+        effectHandler.UpdateEffect();
     }
 
     public void TakeDamage(IAttackable caster, float amount)
     {
         if (amount < 0)
             return;
-        OnTakeDamage(caster, amount);
-        HP -= amount;
+        OnTakeDamage?.Invoke(caster, amount);
+        Stat.HP.Subtract(amount);
         if (HP <= 0)
         {
-            OnEntityDied(caster);
+            OnEntityDied?.Invoke(caster);
             Destroy(gameObject);
         }
     }
@@ -48,25 +76,36 @@ public abstract class Entity : MonoBehaviour, IDamagable
     {
         if (amount < 0)
             return;
-        OnEntityHeal(caster, amount);
-        HP = Mathf.Clamp(HP + amount, 0, entityStat.Get(EntityStatType.MAX_HP));
+        OnEntityHeal?.Invoke(caster, amount);
+        Stat.HP.Add(amount);
     }
 
-    protected abstract void OnEntityDied(IAttackable caster);
-    protected abstract void OnTakeDamage(IAttackable caster, float amount);
-    protected abstract void OnEntityHeal(Entity caster, float amount);
-
-    public (bool isIn, Collider2D? col)IsInShadow()
+    public bool IsInShadow(out Shadow shadow)
     {
-        foreach (var shadow in ShadowPool.Instance.GetChildShadowList(false))
+        shadow = null;
+        foreach (var s in ShadowPool.Instance.GetChildShadowList(false))
         {
-            if (col.IsTouching(shadow.col))
-                return (true, shadow.col);
+            if (col.IsTouching(s.col))
+            {
+                shadow = s;
+                return true;
+            }
         }
-        return (false, null);
+        return false;
+    }
+    public bool IsInShadow()
+    {
+        foreach (var s in ShadowPool.Instance.GetChildShadowList(false))
+        {
+            if (col.IsTouching(s.col))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public List<GameObject>? FieldOfView(float range, float angle, int layer)
+    public List<GameObject> FieldOfView(float range, float angle, int layer)
     {
         Vector2 origin = transform.position;
         List<GameObject> result = new List<GameObject>();
@@ -90,8 +129,7 @@ public abstract class Entity : MonoBehaviour, IDamagable
         return result.OrderBy((s) => (origin - (Vector2)s.transform.position).sqrMagnitude).ToList();
     }
 
-
-    public List<T>? FieldOfView<T>(float range, float angle, int layer) where T : MonoBehaviour
+    public List<T> FieldOfView<T>(float range, float angle, int layer) where T : MonoBehaviour
     {
         Vector2 origin = transform.position;
         List<T> result = new List<T>();
@@ -117,4 +155,29 @@ public abstract class Entity : MonoBehaviour, IDamagable
         }
         return result.OrderBy((s) => (origin - (Vector2)s.transform.position).sqrMagnitude).ToList();
     }
+}
+
+public abstract class Entity<T>: Entity where T : Entity<T>
+{
+    public StateMachine<T> StateMachine => stateMachine;
+    protected StateMachine<T> stateMachine;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        stateMachine = new StateMachine<T>((T)this);
+    }
+
+    protected virtual void Update()
+    {
+        stateMachine?.Update();
+    }
+
+    protected virtual void FixedUpdate()
+    {
+        stateMachine?.FixedUpdate();
+    }
+
+    protected abstract void RegisterStates();
+    protected abstract void RegisterConditions();
 }

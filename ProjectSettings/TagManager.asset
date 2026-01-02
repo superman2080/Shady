@@ -59,5 +59,8 @@ TagManager:
   - name: Light
     uniqueID: 3403702675
     locked: 0
+  - name: HighLight
+    uniqueID: 1929477351
+    locked: 0
   m_RenderingLayers:
   - Default

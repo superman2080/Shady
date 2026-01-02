@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.Collections;
 using UnityEngine;
 using System.Linq;
-using UnityEngine.UI;
 using UnityEngine.Rendering.Universal;
-using System;
-using UnityEngine.EventSystems;
+using PlayerNameSpace;
 
-public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, ITouchable
+public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IInteractable
 {
     [Header("Light Attribute")]
     public float lightScale = 20f;                  // Light source scale (Sense distance is lightScale - minShadowScale)
@@ -20,7 +18,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
 
     private Light2D light2D;
     private List<Shadow> shadowList = new List<Shadow>();       // Shadow Object Pool
-    private PlayerCtrl player;
+    private Player player;
     private Coroutine staminaCor;
 
     private Collider2D[] curObstacles;
@@ -82,6 +80,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
 
     private void GenerateShadow(float lS, float mS, int layer)
     {
+        #region Same Vertice Point
         curObstacles = Physics2D.OverlapCircleAll(transform.position, lS - mS, layer);
 
         if (lateObstacles != null &&
@@ -96,6 +95,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
                 shadowList[i].GenerateShadow(shadowVertices[i]);
             }
         }
+        #endregion
         else
         {
             shadowVertices.Clear();
@@ -130,8 +130,6 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
                 }
             }
             shadowList = shadowList.OrderBy(obj => obj.GetInstanceID()).ToList();
-
-
         }
     }
 
@@ -307,8 +305,8 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
         float eT = 0;
         while (true)
         {
-            if (player.lanternValue.val > 0)
-                player.lanternValue.val -= decreaseDT * Time.deltaTime;
+            if (player.PlayerStat.lampStamina > 0)
+                player.PlayerStat.lampStamina.Subtract(decreaseDT * Time.deltaTime);
             else
             {
                 player.TakeDamage(null, decreaseDT * Time.deltaTime);
@@ -325,7 +323,7 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
 
     public void Activate()
     {
-        player = FindAnyObjectByType<PlayerCtrl>();
+        player = FindAnyObjectByType<Player>();
         activatedTime = Time.time;
         latePos = transform.position;
 
@@ -355,14 +353,14 @@ public class ShadowCaster : MonoBehaviour, ICameraLookable, ISwitchable, IToucha
         IsActivated = false;
     }
 
-    public void HasTouched(PlayerCtrl player)
+    public void HasTouched(Player player)
     {
         RetrieveLantern();
     }
 
     public void RetrieveLantern()
     {
-        player.lantern = this;
+        //player.lantern = this;
         transform.SetParent(player.transform);
         transform.localPosition = Vector2.zero;
         StopCoroutine(staminaCor);

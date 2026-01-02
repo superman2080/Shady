@@ -17,8 +17,6 @@ public class MainCineCam: Singleton<MainCineCam>
     private Coroutine vignetteCor;
     private Vignette vig;
 
-    private ShadowsMidtonesHighlights sMH;
-
 
     void Start()
     {
@@ -28,8 +26,6 @@ public class MainCineCam: Singleton<MainCineCam>
         vCam = gameObject.GetComponentInChildren<CinemachineVirtualCamera>();
         target = transform.Find("Target");
         stateMachine = new StateMachine<MainCineCam>(this, new CSingleLookAt());
-
-        sMH = GetVolumeComponent<ShadowsMidtonesHighlights>();
     }
 
     void Update()
@@ -37,11 +33,11 @@ public class MainCineCam: Singleton<MainCineCam>
         stateMachine.Update();
         if(targetTrList.Count <= 1)
         {
-            stateMachine.ChangeStateImmediately(new CSingleLookAt());
+            stateMachine.ChangeState(new CSingleLookAt());
         }
         else
         {
-            stateMachine.ChangeStateImmediately(new CMultipleLookAt());
+            stateMachine.ChangeState(new CMultipleLookAt());
         }
     }
 

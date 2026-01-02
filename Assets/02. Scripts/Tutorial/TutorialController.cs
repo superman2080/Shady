@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 public class TutorialController : MonoBehaviour
 {
-    public List<TutorialState> tutorialStates;
-    private Queue<TutorialState> actionQueue = new Queue<TutorialState>();
-    public TutorialState curTutorialState { get; private set; }
+    public List<StateBase<TutorialController>> tutorialStates;
+    private Queue<StateBase<TutorialController>> actionQueue = new Queue<StateBase<TutorialController>>();
+    public StateBase<TutorialController> curTutorialState { get; private set; }
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -33,7 +33,7 @@ public class TutorialController : MonoBehaviour
         {
             curTutorialState.Exit(this);
         }
-        if(actionQueue.TryDequeue(out TutorialState state))
+        if(actionQueue.TryDequeue(out StateBase<TutorialController> state))
         {
             curTutorialState = state;
             curTutorialState.Enter(this);

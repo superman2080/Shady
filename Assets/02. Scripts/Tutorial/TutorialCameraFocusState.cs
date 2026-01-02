@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 
-public class TutorialCameraFocusState : TutorialState
+public class TutorialCameraFocusState : MonoStateBase<TutorialController>
 {
     [Min(0.5f)] public float moveTime = 0.5f;
     [Min(0.5f)] public float focusTime = 0.5f;

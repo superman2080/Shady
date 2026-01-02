@@ -16,7 +16,7 @@ public class SniperRifleProjectile : MonoBehaviour, IHitScan
         RaycastHit2D[] hits = Physics2D.RaycastAll(origin, dir, dist, user.AttackLayer);
         foreach (var hit in hits)
         {
-            hit.transform.GetComponent<IDamagable>().TakeDamage(user, user.WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
+            hit.transform.GetComponent<IDamagable>().TakeDamage(user, user.WeaponStat.Get(WeaponStatType.DAMAGE));
             OnHit(hit.collider);
         }
         StartCoroutine(AfterimageEffectCor(user, origin, dir, 0.2f, 0.2f));

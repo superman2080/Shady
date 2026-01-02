@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ScoutSuspicion : IState<Enemy>
+public class ScoutSuspicion : StateBase<Enemy>
 {
     private Vector2 suspicionPos;
     private Vector2 originPos;
@@ -11,19 +11,19 @@ public class ScoutSuspicion : IState<Enemy>
         this.suspicionPos = suspicionPos;
     }
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
         originPos = caster.transform.position;
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 2f);
+        caster.Stat.SetDefault(DefaultStatType.MOVE_SPEED, 2f);
         caster.navMesh.isStopped = false;
         caster.isLookAtTarget = true;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
     }
 }

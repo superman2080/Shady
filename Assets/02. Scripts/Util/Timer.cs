@@ -13,7 +13,7 @@ public class Timer
     public bool IsRunning => isRunning;
     public float TimeLeft => timeLeft;
 
-    public Timer(float duration, Action onComplete, Action onUpdate = null, bool autoStart = true)
+    public Timer(float duration, Action onComplete = null, Action onUpdate = null, bool autoStart = true)
     {
         this.duration = duration;
         this.timeLeft = duration;

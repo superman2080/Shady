@@ -1,42 +1,81 @@
+using System;
 using UnityEngine;
 
 public class WeaponCtrl
 {
-    public Entity user { get; private set; }
-    public WeaponStat weaponStat { get; private set; }
-    public IWeapon nowWeapon { get; private set; }
-    public bool CanAttack { get => canAttack && nowWeapon != null; }
+    public IAttackable User { get; private set; }
+    public IWeapon CurrentWeapon { get; private set; }
+    public bool CanAttack => CurrentWeapon != null && canAttack;
+    public float RemainTime => attackCooldownTimer?.TimeLeft ?? 0f;
+
+    public Action onUpdate;
+    public Action onComplete;
+
     private bool canAttack = true;
-    private IWeapon lastWeapon;
+    private Timer attackCooldownTimer;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
 
-    public WeaponCtrl(Entity user)
+    public WeaponCtrl(IAttackable user)
     {
-        weaponStat = new WeaponStat();
-        this.user = user;
+        User = user;
+        onComplete += () => { 
+            OnCooldownComplete();
+        };
     }
 
     public void SetWeapon(IWeapon weapon)
     {
-        if (nowWeapon == weapon)
-            return;
-        nowWeapon = weapon;
-        lastWeapon = nowWeapon;
-        nowWeapon.InitWeapon(user as IAttackable);
+        if (CurrentWeapon == weapon) return;
+
+        CurrentWeapon?.UnequipWeapon(User);
+        ResetCooldown();
+
+        CurrentWeapon = weapon;
+        CurrentWeapon?.EquipWeapon(User);
     }
 
-    public void UsingWeapon()
+    public void UnequipWeapon()
     {
-        if (canAttack == false)
-            return;
+        CurrentWeapon?.UnequipWeapon(User);
+        attackCooldownTimer?.Reset();
+
+        CurrentWeapon = null;
+        canAttack = true;
+    }
+
+    public bool TryUsingWeapon()
+    {
+        if (!CanAttack) return false;
+
         canAttack = false;
-        if (lastWeapon != nowWeapon)
+        CurrentWeapon.Using(User);
+        StartCooldown();
+
+        return true;
+    }
+
+    private void StartCooldown()
+    {
+        float attackSpeed = User?.WeaponStat.Get(WeaponStatType.ATTACK_SPEED) ?? 1f;
+
+        if (attackSpeed <= 0f)
         {
-            nowWeapon.InitWeapon(user as IAttackable);
-            lastWeapon = nowWeapon;
+            canAttack = true;
+            return;
         }
-        nowWeapon.Using(user as IAttackable);
-        new Timer(1f / weaponStat.Get(WeaponStatType.ATTACK_SPEED), () => { canAttack = true; });
+
+        float cooldown = 1f / attackSpeed;
+        attackCooldownTimer = new Timer(cooldown, onComplete, onUpdate);
+    }
+
+    private void OnCooldownComplete()
+    {
+        canAttack = true;
+    }
+
+    public void ResetCooldown()
+    {
+        attackCooldownTimer?.Reset();
+        canAttack = true;
     }
 }

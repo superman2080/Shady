@@ -8,7 +8,7 @@ public class EnemyInspecterEditor : Editor
     public override void OnInspectorGUI()
     {
         var script = (Enemy)target;
-        string state = script.stateMachine.State != null ? script.stateMachine.State.ToString() : "State is null";
+        string state = script.stateMachine.CurState != null ? script.stateMachine.CurState.ToString() : "State is null";
         EditorGUILayout.BeginVertical("box");
         EditorGUILayout.LabelField($"State: { state}", EditorStyles.boldLabel);
         EditorGUILayout.EndVertical();

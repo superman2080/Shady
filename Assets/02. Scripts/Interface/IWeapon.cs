@@ -4,7 +4,9 @@ public interface IWeapon
 {
     public LayerMask AttackLayer { get; }
 
-    public void InitWeapon(IAttackable user);
+    public void EquipWeapon(IAttackable user);
+
+    public void UnequipWeapon(IAttackable user);
 
     public void Using(IAttackable user);
 

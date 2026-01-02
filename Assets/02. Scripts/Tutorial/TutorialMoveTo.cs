@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TutorialMoveTo : TutorialState
+public class TutorialMoveTo : MonoStateBase<TutorialController>
 {
     public Transform targetTr;
     public Transform destinationTr;

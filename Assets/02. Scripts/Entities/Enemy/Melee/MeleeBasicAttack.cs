@@ -1,18 +1,18 @@
 using UnityEngine;
 
-public class MeleeBasicAttack : IState<Enemy>
+public class MeleeBasicAttack : StateBase<Enemy>
 {
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
-        caster.Attack(caster, caster.WeaponController.weaponStat.Get(WeaponStatType.DAMAGE));
-        caster.stateMachine.ChangeState(new MeleeEngagement(), 0.75f);
+        caster.Attack(caster, caster.WeaponStat.Get(WeaponStatType.DAMAGE));
+        caster.stateMachine.ChangeState(new MeleeEngagement());
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
 
     }

@@ -8,13 +8,17 @@ public class SniperRifle : IWeapon
     public LayerMask AttackLayer { get; private set; }
     private SniperRifleProjectile projectilePrefab;
 
-    public void InitWeapon(IAttackable user)
+    public void EquipWeapon(IAttackable user)
     {
         AttackLayer = user.AttackLayer;
-        user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_DISTANCE, 10);
-        user.WeaponController.weaponStat.SetDefault(WeaponStatType.DAMAGE, 35);
-        user.WeaponController.weaponStat.SetDefault(WeaponStatType.ATTACK_SPEED, 1f);
+        user.WeaponStat.SetDefault(WeaponStatType.ATTACK_DISTANCE, 10);
+        user.WeaponStat.SetDefault(WeaponStatType.DAMAGE, 35);
+        user.WeaponStat.SetDefault(WeaponStatType.ATTACK_SPEED, 1f);
         projectilePrefab = Resources.Load<SniperRifleProjectile>("Prefabs/HitScan/SniperRifleProjectile");
+    }
+
+    public void UnequipWeapon(IAttackable user)
+    {
     }
 
     public void Using(IAttackable user)
@@ -24,4 +28,6 @@ public class SniperRifle : IWeapon
         var projectile = Object.Instantiate(projectilePrefab, tr);
         projectile.Fire(user, tr.position, dir);
     }
+
+
 }

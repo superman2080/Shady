@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class Sniper : Enemy, IAttackable
 {
-    public override IState<Enemy> DefaultState => new SniperPatrol();
+    public override StateBase<Enemy> DefaultState => new SniperPatrol();
 
-    public override IState<Enemy> AttackState => new SniperEngagement();
+    public override StateBase<Enemy> AttackState => new SniperEngagement();
 
     [Range(0, 180f)] public float patrolRadius;
     [HideInInspector] public Vector2 originDir;
@@ -17,7 +17,7 @@ public class Sniper : Enemy, IAttackable
         float originAngle = GameMath.DirectionToAngle(transform.right.normalized);
         patrolAreaEdge = new Vector2[2] { origin + GameMath.AngleToDirection(originAngle - patrolRadius), origin + GameMath.AngleToDirection(originAngle + patrolRadius) };
         base.Start();
-        entityStat.SetDefault(EntityStatType.MOVE_SPEED, 0);
+        Stat.SetDefault(DefaultStatType.MOVE_SPEED, 0);
         navMesh.isStopped = true;
         WeaponController.SetWeapon(new SniperRifle());
     }
@@ -25,30 +25,6 @@ public class Sniper : Enemy, IAttackable
     private void FixedUpdate()
     {
         rb2d.MovePosition(origin);
-    }
-
-
-    public override void OnEntityAttack(Entity caster, float amount)
-    {
-    }
-
-    protected override void OnAuditoryDectected(Vector2 detectPos)
-    {
-    }
-
-    protected override void OnEntityDied(IAttackable caster)
-    {
-    }
-
-    protected override void OnEntityHeal(Entity caster, float amount)
-    {
-    }
-
-    protected override void OnTakeDamage(IAttackable caster, float amount)
-    {
-        if (stateMachine.CompareState(stateMachine.State, DefaultState) ||
-       stateMachine.CompareState(stateMachine.State, "Doubt"))
-            stateMachine.ChangeStateImmediately(AttackState);
     }
 
     protected override void OnDrawGizmos()

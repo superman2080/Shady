@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Doubt : IState<Enemy>
+public class Doubt : StateBase<Enemy>
 {
 
     private Vector2 targetPos;
@@ -14,9 +14,9 @@ public class Doubt : IState<Enemy>
         this.targetPos = targetPos;
     }
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
-        canMove = caster.entityStat.Get(EntityStatType.MOVE_SPEED) > 0;
+        canMove = caster.Stat.Get(DefaultStatType.MOVE_SPEED) > 0;
         caster.targetPos = targetPos;
         caster.isLookAtTarget = true;
         if (canMove)
@@ -34,15 +34,15 @@ public class Doubt : IState<Enemy>
         {
             timer = new Timer(5f, () =>
             {
-                caster.stateMachine.ChangeStateImmediately(caster.DefaultState);
+                caster.stateMachine.ChangeState(caster.DefaultState);
             }, null, false);
         }
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
-            caster.stateMachine.ChangeStateImmediately(caster.AttackState);
+            caster.stateMachine.ChangeState(caster.AttackState);
         if (canMove)
         {
             if (caster.HasReachedDestination(targetPos))
@@ -52,7 +52,7 @@ public class Doubt : IState<Enemy>
                 timer.Update(Time.deltaTime);
             }
             if (caster.HasReachedDestination(originPos) && hasReached)
-                caster.stateMachine.ChangeStateImmediately(caster.DefaultState);
+                caster.stateMachine.ChangeState(caster.DefaultState);
         }
         else
         {
@@ -63,7 +63,7 @@ public class Doubt : IState<Enemy>
         }
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         caster.navMesh.ResetPath();
     }

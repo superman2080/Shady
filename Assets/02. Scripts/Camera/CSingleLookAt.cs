@@ -1,15 +1,15 @@
 using UnityEngine;
 
-public class CSingleLookAt : IState<MainCineCam>
+public class CSingleLookAt : StateBase<MainCineCam>
 {
     public float TransitionTime { get; set; }
 
-    public void Enter(MainCineCam caster)
+    public override void Enter(MainCineCam caster)
     {
         caster.SetOrthoSize(caster.minOrthoSize);
     }
 
-    public void Execute(MainCineCam caster)
+    public override void Execute(MainCineCam caster)
     {
         if(caster.targetTrList.Count <= 0)
         {
@@ -21,7 +21,7 @@ public class CSingleLookAt : IState<MainCineCam>
         }
     }
 
-    public void Exit(MainCineCam caster)
+    public override void Exit(MainCineCam caster)
     {
     }
 }

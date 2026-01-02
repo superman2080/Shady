@@ -1,13 +1,13 @@
 using System;
 using UnityEngine;
 
-public class SniperPatrol : IState<Enemy>
+public class SniperPatrol : StateBase<Enemy>
 {
     private Vector2 targetDir;
     private Sniper owner;
     private int idx = 0;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
         caster.isLookAtTarget = true;
         caster.rotationSpeed = 30f;
@@ -16,11 +16,11 @@ public class SniperPatrol : IState<Enemy>
         caster.targetPos = targetDir;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         if(caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.AttackLayer))
         {
-            caster.stateMachine.ChangeState(new SniperEngagement(), 0.05f);
+            caster.stateMachine.ChangeState(new SniperEngagement());
         }
         if(GameMath.IsLookingDir(caster.transform, (owner.patrolAreaEdge[idx] - (Vector2)caster.transform.position).normalized, 1f))
         {
@@ -30,7 +30,7 @@ public class SniperPatrol : IState<Enemy>
             caster.isLookAtTarget = true;
         }
     }
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         caster.isLookAtTarget = false;
     }

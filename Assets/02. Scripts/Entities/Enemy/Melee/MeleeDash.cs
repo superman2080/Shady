@@ -1,13 +1,13 @@
 using UnityEngine;
 
-public class MeleeDash : IState<Enemy>
+public class MeleeDash : StateBase<Enemy>
 {
     private Vector2 targetPos;
 
     private Vector2 origin;
     private float elapsedTime;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
         origin = caster.transform.position;
         Vector2 playerPos = caster.playerTr.position;
@@ -19,15 +19,15 @@ public class MeleeDash : IState<Enemy>
         targetPos = GameMath.GetOffsetPosition(origin, playerPos, 2);
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         elapsedTime += Time.deltaTime;
         caster.transform.position = Vector2.Lerp(origin, targetPos, GetEaseOutT(elapsedTime, 0.25f));
         if (elapsedTime > 0.25f)
-            caster.stateMachine.ChangeState(new MeleeEngagement(), 0.25f);
+            caster.stateMachine.ChangeState(new MeleeEngagement());
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         caster.isLookAtTarget = true;
         caster.navMesh.isStopped = false;

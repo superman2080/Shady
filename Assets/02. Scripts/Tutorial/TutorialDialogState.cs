@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class TutorialDialogState : TutorialState
+public class TutorialDialogState : MonoStateBase<TutorialController>
 {
     public List<DialogData> datas;
     private bool finishDialog = false;
@@ -9,7 +9,7 @@ public class TutorialDialogState : TutorialState
 
     public override void Enter(TutorialController caster)
     {
-        entities = FindObjectsByType<Entity>(FindObjectsSortMode.InstanceID);
+        entities = Object.FindObjectsByType<Entity>(FindObjectsSortMode.InstanceID);
         foreach (var entity in entities)
         {
             entity.canBehavior = false;

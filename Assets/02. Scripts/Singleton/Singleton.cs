@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
+    [SerializeField] private bool dontDestroyOnLoad = true;
     private static T instance;
     public static T Instance
     {
@@ -24,6 +25,8 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 
     protected virtual void Awake()
     {
+        if (dontDestroyOnLoad == false)
+            return;
         if(transform.parent != null && transform.root != null)
         {
             DontDestroyOnLoad(transform.root.gameObject);

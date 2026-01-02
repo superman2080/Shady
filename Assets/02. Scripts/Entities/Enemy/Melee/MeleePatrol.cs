@@ -1,14 +1,14 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class MeleePatrol : IState<Enemy>
+public class MeleePatrol : StateBase<Enemy>
 {
     private Vector2[] patrolPos = new Vector2[3];
     private int idx = 0;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 1f);
+        caster.Stat.SetDefault(DefaultStatType.MOVE_SPEED, 1f);
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 3, 3);
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
@@ -18,7 +18,7 @@ public class MeleePatrol : IState<Enemy>
         caster.spriteRenderer.color = Color.green;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         if(caster.HasReachedDestination(patrolPos[idx]))
         {
@@ -28,11 +28,11 @@ public class MeleePatrol : IState<Enemy>
         }
         if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
         {
-            caster.stateMachine.ChangeState(new MeleeEngagement(), 0.5f);
+            caster.stateMachine.ChangeState(new MeleeEngagement());
         }    
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         Debug.LogWarning("End Patrol");
         caster.navMesh.isStopped = true;

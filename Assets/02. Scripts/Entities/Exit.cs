@@ -1,9 +1,10 @@
 using UnityEngine;
+using PlayerNameSpace;
 
-public class Exit : MonoBehaviour, ITouchable
+public class Exit : MonoBehaviour, IInteractable
 {
 
-    public void HasTouched(PlayerCtrl player)
+    public void HasTouched(Player player)
     {
         var entities = FindObjectsByType<Entity>(FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
         foreach (var entity in entities)

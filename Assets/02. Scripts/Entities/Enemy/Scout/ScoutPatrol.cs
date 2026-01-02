@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-public class ScoutPatrol : IState<Enemy>
+public class ScoutPatrol : StateBase<Enemy>
 {
     private Vector2[] patrolPos = new Vector2[5];
     private int idx = 0;
@@ -13,9 +13,9 @@ public class ScoutPatrol : IState<Enemy>
     private List<Vector2> lateShadowPosList = new List<Vector2>();
     private bool lateIsInShadow;
 
-    public void Enter(Enemy caster)
+    public override void Enter(Enemy caster)
     {
-        caster.entityStat.SetDefault(EntityStatType.MOVE_SPEED, 3f);
+        caster.Stat.SetDefault(DefaultStatType.MOVE_SPEED, 3f);
         patrolPos = caster.RandomReachablePosition(caster.transform.position, caster.recogDist, 10, 5);
         caster.navMesh.SetDestination(patrolPos[idx]);
         caster.targetPos = patrolPos[idx];
@@ -24,7 +24,7 @@ public class ScoutPatrol : IState<Enemy>
         caster.spriteRenderer.color = Color.green;
     }
 
-    public void Execute(Enemy caster)
+    public override void Execute(Enemy caster)
     {
         if (caster.HasReachedDestination(patrolPos[idx]))
         {
@@ -34,7 +34,7 @@ public class ScoutPatrol : IState<Enemy>
         }
         if (caster.IsPlayerInSight(caster.recogDist, caster.sightAngle, caster.recogLayer))
         {
-            caster.stateMachine.ChangeState(new ScoutEngagement(), 0.5f);
+            caster.stateMachine.ChangeState(new ScoutEngagement());
         }
 
         FindNewLightSource(caster);
@@ -42,7 +42,7 @@ public class ScoutPatrol : IState<Enemy>
         HasDifferentShadowInSight(caster);
     }
 
-    public void Exit(Enemy caster)
+    public override void Exit(Enemy caster)
     {
         caster.navMesh.isStopped = true;
         caster.navMesh.ResetPath();
@@ -57,7 +57,7 @@ public class ScoutPatrol : IState<Enemy>
             {
                 if (light.activatedTime > 0.1f)
                 {
-                    caster.stateMachine.ChangeState(new Doubt(light.transform.position), 0.5f);
+                    caster.stateMachine.ChangeState(new Doubt(light.transform.position));
                 }
             }
         }
@@ -77,7 +77,7 @@ public class ScoutPatrol : IState<Enemy>
             if(diff != default)
             {
                 Debug.LogError("Changed shadow shape");
-                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, diff, 2)), 0.5f);
+                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, diff, 2)));
                 return;
             }
         }
@@ -88,7 +88,7 @@ public class ScoutPatrol : IState<Enemy>
 
             if (except.lightSource.activatedTime > 0.1f && except.lightSource.activatedTime >= Time.time)
             {
-                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, except.lightSource.transform.position, 2)), 0.5f);
+                caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, except.lightSource.transform.position, 2)));
                 Debug.LogError("Find a new shadow in sight");
                 return;
             }
@@ -98,10 +98,10 @@ public class ScoutPatrol : IState<Enemy>
         {
             foreach (var shadow in lateShadowList)
             {
-                if(!curShadowList.Exists(s => s == shadow) && caster.IsInShadow().isIn == lateIsInShadow && lateShadowList.Find(o => o == shadow).lightSource == null)
+                if(!curShadowList.Exists(s => s == shadow) && caster.IsInShadow() == lateIsInShadow && lateShadowList.Find(o => o == shadow).lightSource == null)
                 {
                     int idx = lateShadowList.FindIndex(o => o == shadow);
-                    caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, lateShadowPosList[idx], 2)), 0.5f);
+                    caster.stateMachine.ChangeState(new Doubt(GameMath.GetOffsetPosition(origin, lateShadowPosList[idx], 2)));
                     Debug.LogError("Disappear shadow in sight");
                     return;
                 }
@@ -109,7 +109,7 @@ public class ScoutPatrol : IState<Enemy>
         }
         lateShadowList = curShadowList.ToList();
         lateShadowPosList = curShadowList.Select(t => (Vector2)t.lightSource.transform.position).ToList();
-        lateIsInShadow = caster.IsInShadow().isIn;
+        lateIsInShadow = caster.IsInShadow();
         lateLightPosList = curLightPosList.ToList();
     }
 }

@@ -480,6 +480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffdba827381db6240b6844c31fcaaf5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveTime: 0.5
   focusTime: 3
   targetTr: {fileID: 377351080}
 --- !u!4 &377351080
@@ -90393,7 +90394,7 @@ MonoBehaviour:
   m_Intensity: 1.5
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 00000000911094ab49001fc19361e0ca7d3f2e454f26e796
+  m_ApplyToSortingLayers: 00000000911094ab49001fc19361e0ca7d3f2e454f26e796e77c0173
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -90769,6 +90770,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c3dc3bc00dfccb42a85a19f01203270, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hudPool: {fileID: 0}
   fadeImage: {fileID: 93521578}
   dialogSystem: {fileID: 566559367}
 --- !u!1 &928197860
@@ -105099,10 +105101,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 619352544162687216, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
-      propertyPath: m_BodyType
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2042774743658623087, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
       propertyPath: m_Name
       value: Player
@@ -105147,7 +105145,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3232695978936529011, guid: 61bc64d94efa4a94790f639c2022452a, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
